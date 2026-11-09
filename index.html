@@ -1,0 +1,2388 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>節奏小鎮</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Huninn&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@400;700;900&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&display=swap">
+<style>
+/* Layout: one-screen game. Scene backdrop (sky + hills) behind stacked screens; sticker-style cards with thick plum outlines. Single bright theme by choice. */
+:root{
+  --ink:#3b2a52; --ink-soft:#6f5d8a; --paper:#ffffff; --paper-2:#f6f1ff;
+  --sun:#ffd23f; --peach:#ff8e72; --grass:#7cd05a; --sky:#bfe8ff;
+  --t1:#ff7a59; --t2:#3fa9f5; --t3:#45b83c; --t4:#a46ee8; --t5:#ff9f1c; --t6:#f15bb5; --t7:#00b8a9; --t8:#9c6644;
+  --perfect:#2fb84a; --good:#f2a900; --miss:#e8505b;
+  --sa:#c9ecff; --sb:#eef9ff; --ha:#9edb6f; --hb:#7cc756;
+  --f-disp:'Huninn','Chiron GoRound TC','PingFang TC','Microsoft JhengHei',system-ui,sans-serif;
+  --f-body:'Chiron GoRound TC','PingFang TC','Microsoft JhengHei','Noto Sans TC',system-ui,sans-serif;
+  --f-num:'Fredoka','Chiron GoRound TC',system-ui,sans-serif;
+  color-scheme: light;
+}
+[hidden]{display:none!important}
+html{height:100%;box-sizing:border-box}
+*,*::before,*::after{box-sizing:border-box}
+body{height:100%;background:var(--sky);color:var(--ink);font-family:var(--f-body);
+  font-size:clamp(15px, calc(.82vw + .6vh), 30px);line-height:1.5;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+#app{position:relative;height:100%;overflow:hidden}
+
+/* ---------- scene ---------- */
+#bg{position:absolute;inset:0;background:linear-gradient(180deg,var(--sa) 0%,var(--sb) 70%);transition:background .6s;overflow:hidden}
+#bg::before,#bg::after{content:"";position:absolute;left:-10%;right:-10%;border-radius:50% 50% 0 0}
+#bg::before{bottom:-22vh;height:44vh;background:var(--ha);left:-30%;right:20%}
+#bg::after{bottom:-26vh;height:42vh;background:var(--hb);left:30%;right:-30%}
+.cloud{position:absolute;width:9em;height:3em;background:#fff;border-radius:3em;opacity:.85;animation:drift 60s linear infinite}
+.cloud::before,.cloud::after{content:"";position:absolute;background:#fff;border-radius:50%}
+.cloud::before{width:3.6em;height:3.6em;left:1.4em;top:-1.8em}
+.cloud::after{width:2.6em;height:2.6em;left:4.2em;top:-1.1em}
+@keyframes drift{from{transform:translateX(-12em)}to{transform:translateX(110vw)}}
+
+/* ---------- screens ---------- */
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;gap:.8em;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));
+  padding-block:14px;overflow-y:auto;overflow-x:hidden}
+.bar{display:flex;align-items:center;gap:.6em;flex-wrap:wrap}
+.bar h2{font-family:var(--f-disp);font-weight:400;font-size:1.6em;margin:0;text-wrap:balance}
+.spacer{flex:1}
+
+/* ---------- buttons ---------- */
+.btn{font-family:var(--f-disp);font-size:1.1em;line-height:1.2;padding:.55em 1.2em;border:3px solid var(--ink);border-radius:999px;
+  background:var(--sun);color:var(--ink);box-shadow:0 5px 0 var(--ink);cursor:pointer;transition:transform .07s, box-shadow .07s;white-space:nowrap}
+.btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ink)}
+.btn.alt{background:var(--paper)}
+.btn.go{background:var(--grass)}
+.btn.pk{background:var(--peach)}
+.btn.big{font-size:1.5em;padding:.5em 1.6em}
+.btn.sm{font-size:.95em;padding:.35em .9em;box-shadow:0 3px 0 var(--ink)}
+.btn.sm:active{transform:translateY(2px);box-shadow:0 1px 0 var(--ink)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+:focus-visible{outline:4px dashed var(--t2);outline-offset:3px}
+.card{background:var(--paper);border:3px solid var(--ink);border-radius:22px;box-shadow:0 6px 0 var(--ink)}
+
+/* ---------- title ---------- */
+#scr-title{align-items:center;justify-content:center;text-align:center}
+.parade{display:flex;gap:.3em;justify-content:center;flex-wrap:wrap;max-width:100%}
+.parade .pa{width:clamp(48px,8vw,120px);animation:hop .6s ease-in-out infinite alternate}
+@keyframes hop{from{transform:translateY(0)}to{transform:translateY(-14%)}}
+.logo{font-family:var(--f-disp);font-weight:400;font-size:clamp(3em,9vw,6em);line-height:1;margin:.2em 0 0;color:var(--ink);
+  text-shadow:4px 4px 0 var(--sun), 8px 8px 0 var(--peach);letter-spacing:.06em}
+.tag{font-size:1.25em;margin:.3em 0 .6em}
+.row{display:flex;gap:.8em;flex-wrap:wrap;justify-content:center}
+.how{margin:1.2em auto 0;padding:.8em 1.4em .8em 2.6em;text-align:left;max-width:30em;font-size:1em}
+.how li{margin:.2em 0}
+.how li::marker{font-family:var(--f-num);font-weight:700;color:var(--peach)}
+
+/* ---------- map ---------- */
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,12em),1fr));gap:1.4em 1em;padding:1.4em .2em 2em;max-width:1400px;width:100%;margin:0 auto}
+.node{position:relative;font:inherit;color:inherit;text-align:center;cursor:pointer;padding:1.1em .8em .9em;display:flex;flex-direction:column;align-items:center;gap:.15em;
+  background:var(--paper);border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink);transition:transform .1s}
+.node:hover{transform:translateY(-3px)}
+.node::before{content:"";position:absolute;left:50%;top:-1.05em;transform:translateX(-50%);width:60%;height:1.3em;background:var(--c);border:3px solid var(--ink);border-bottom:0;border-radius:14px 14px 0 0}
+.node .lvno{font-family:var(--f-num);font-weight:700;font-size:.85em;color:var(--ink-soft);letter-spacing:.08em}
+.node .nm{font-family:var(--f-disp);font-size:1.3em;line-height:1.2}
+.node .face{width:5.2em}
+.node .np{font-size:.8em;color:var(--ink-soft);min-height:2.4em;line-height:1.3}
+.stars{font-size:1.3em;letter-spacing:.08em;color:#d9d0e6}
+.stars b{color:var(--sun);-webkit-text-stroke:1.2px var(--ink);font-weight:400}
+.node.locked{cursor:not-allowed;background:#ece8f2}
+.node.dim{opacity:.4}
+.node.hit{background:#fff4c2;outline:4px solid var(--peach);outline-offset:3px}
+.nrh{display:flex;flex-wrap:wrap;gap:.25em;justify-content:center;min-height:2.6em;align-content:flex-start}
+.nrh i{font-style:normal;font-size:.75em;border:2px solid var(--ink);border-radius:999px;padding:0 .5em;background:var(--paper-2);line-height:1.5}
+.nrh b{font-family:var(--f-num);font-weight:500;color:var(--ink-soft);margin-left:.3em}
+.finder{max-width:1400px;width:100%;margin:0 auto;padding:.8em 1em;display:flex;flex-direction:column;gap:.5em}
+.fchip{font:inherit;color:inherit;font-size:.88em;border:2px solid var(--ink);border-radius:999px;padding:.1em .7em;background:#fff;cursor:pointer}
+.fchip b{font-family:var(--f-num);font-weight:500;color:var(--ink-soft)}
+.fchip.on{background:var(--sun);box-shadow:0 2px 0 var(--ink)}
+.node.locked .face{filter:grayscale(1) opacity(.5)}
+.node .lock{position:absolute;top:.6em;right:.6em;font-size:.85em;background:var(--ink);color:#fff;border-radius:999px;padding:.05em .6em}
+
+/* ---------- intro / custom ---------- */
+.intro-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:1.2em;max-width:1400px;width:100%;margin:0 auto;align-items:start}
+@media (max-width:820px){.intro-grid{grid-template-columns:minmax(0,1fr)}}
+.hero{padding:1.2em;text-align:center;display:flex;flex-direction:column;align-items:center;gap:.4em}
+.hero .face{width:min(14em,60%)}
+.hero h3{font-family:var(--f-disp);font-weight:400;font-size:1.8em;margin:0;line-height:1.2}
+.hero p{margin:0;max-width:22em}
+.sec-t{font-family:var(--f-disp);font-weight:400;font-size:1.25em;margin:.2em 0 .5em}
+.panel{padding:1.1em 1.2em;display:flex;flex-direction:column;gap:.6em;min-width:0}
+.pcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,10.5em),1fr));gap:.8em}
+.pcard{position:relative;border:3px solid var(--ink);border-radius:16px;background:var(--paper);padding:.5em .5em .6em;display:flex;flex-direction:column;align-items:center;gap:.1em;min-width:0}
+.pcard .pc-n{height:4.6em;display:flex;align-items:center;justify-content:center;width:100%}
+.pcard .pc-n svg{height:100%;max-width:100%;width:auto}
+.pcard .pc-name{font-weight:700;font-size:.92em;text-align:center;line-height:1.25}
+.pcard .pc-syl{font-family:var(--f-num);color:var(--ink-soft);font-size:.9em}
+.pcard .tagnew{position:absolute;top:-.7em;left:-.4em;background:var(--peach);border:2px solid var(--ink);border-radius:999px;font-size:.75em;padding:0 .55em;font-weight:900}
+.pcard .pc-play{margin-top:.2em}
+.pick .pcard{cursor:pointer;background:#f3f0f7;opacity:.72;transition:transform .1s}
+.pick .pcard.sel{background:#fff8d6;opacity:1;box-shadow:0 4px 0 var(--ink)}
+.pick .pcard .chk{position:absolute;top:.35em;right:.4em;width:1.4em;height:1.4em;border:2.5px solid var(--ink);border-radius:8px;background:#fff;display:grid;place-items:center;font-weight:900;font-size:.9em}
+.pick .pcard.sel .chk{background:var(--grass)}
+.chips{display:flex;flex-wrap:wrap;gap:.4em}
+.chip{border:2px solid var(--ink);border-radius:999px;padding:.05em .7em;font-size:.88em;background:var(--paper-2)}
+.opts{display:flex;flex-direction:column;gap:.7em;padding:.9em 1em;border-radius:16px;background:var(--paper-2);border:2px dashed var(--ink-soft)}
+.opt{display:flex;align-items:center;gap:.7em;flex-wrap:wrap}
+.ol{font-weight:700;min-width:4.2em}
+.seg{display:flex;border:3px solid var(--ink);border-radius:999px;overflow:hidden;background:#fff;flex-wrap:wrap}
+.seg button{font:inherit;color:inherit;border:0;background:transparent;padding:.3em .9em;cursor:pointer;border-right:2px solid var(--ink)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--sun);font-weight:900}
+input[type=range]{accent-color:var(--peach);width:min(16em,60vw);height:1.6em}
+output{font-family:var(--f-num);font-weight:700;min-width:4.5em}
+.tog{display:inline-flex;align-items:center;gap:.4em;cursor:pointer;margin-right:1em}
+.tog input{width:1.3em;height:1.3em;accent-color:var(--grass)}
+.note-s{font-size:.85em;color:var(--ink-soft);margin:0}
+.err{color:var(--miss);font-weight:700;min-height:1.5em;margin:0}
+
+/* ---------- play ---------- */
+#scr-play{overflow:hidden;gap:10px;padding-block:10px;touch-action:none;-webkit-touch-callout:none}
+.drums.teams{height:clamp(96px,19vh,230px)}
+.drums.many{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));height:clamp(130px,25vh,300px);gap:8px}
+.drums.many .drum{font-size:1.4em;border-radius:20px}
+.drums.many .drum small{font-size:.5em}
+.stage.many .nota-card svg{max-height:16vh}
+.stage.many .ani-wrap{height:20%}
+.drum *{pointer-events:none}
+.ttest{border:3px dashed var(--ink-soft);border-radius:16px;height:6.5em;display:grid;place-items:center;text-align:center;touch-action:none;background:var(--paper-2);font-size:.95em;position:relative;overflow:hidden}
+.ttest .tdot{position:absolute;width:2.4em;height:2.4em;margin:-1.2em 0 0 -1.2em;border-radius:50%;background:var(--peach);opacity:.7;pointer-events:none}
+.hud{display:flex;align-items:center;gap:.6em;flex-wrap:wrap}
+.hud .lv{font-family:var(--f-disp);font-size:1.2em}
+.hud .rd{font-family:var(--f-num);font-weight:700;background:var(--paper);border:2.5px solid var(--ink);border-radius:999px;padding:.05em .7em}
+.score{display:flex;gap:.5em;flex-wrap:wrap;align-items:center}
+.sc{font-family:var(--f-num);font-weight:700;background:var(--paper);border:2.5px solid var(--ink);border-radius:999px;padding:.05em .8em;font-variant-numeric:tabular-nums;display:flex;gap:.4em;align-items:center}
+.sc .dot{width:.8em;height:.8em;border-radius:50%;border:2px solid var(--ink)}
+.sc.pulse{animation:pulse .3s}
+@keyframes pulse{50%{transform:scale(1.15)}}
+.fever-b{font-family:var(--f-num);font-weight:700;background:var(--peach);border:2.5px solid var(--ink);border-radius:999px;padding:.05em .7em;animation:pulse .5s infinite}
+.stage{flex:1;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:10px;position:relative}
+.nota-wrap{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;max-width:1300px;width:100%;margin:0 auto}
+@media (max-width:700px){.nota-wrap{grid-template-columns:minmax(0,1fr)}.nota-wrap .phasebox{flex-direction:row;align-items:center;justify-content:center}}
+.runner{min-height:130px}
+.bigcount{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:20;pointer-events:none;text-align:center;font-family:var(--f-disp);line-height:1}
+.bigcount .bn{display:block;font-family:var(--f-num);font-weight:700;font-size:min(30vmin,260px);color:var(--sun);-webkit-text-stroke:min(1.4vmin,10px) var(--ink);paint-order:stroke fill;text-shadow:0 .06em 0 var(--ink)}
+.bigcount .bl{display:inline-block;font-size:min(6vmin,48px);background:var(--paper);border:4px solid var(--ink);border-radius:999px;padding:.1em .8em;margin-bottom:.2em}
+.bigcount .bn{white-space:nowrap}
+.bigcount.go .bn{color:var(--grass);font-family:var(--f-disp);font-weight:400;font-size:min(17vmin,150px);-webkit-text-stroke:min(1vmin,7px) var(--ink)}
+.bigcount.flash{animation:bigflash var(--bd,.6s) ease-out forwards}
+@keyframes bigflash{0%{opacity:0;transform:translate(-50%,-50%) scale(1.7)}14%{opacity:1;transform:translate(-50%,-50%) scale(1)}62%{opacity:.95}100%{opacity:0;transform:translate(-50%,-50%) scale(.92)}}
+.runner{position:relative;min-height:0;border:3px solid var(--ink);border-radius:22px;overflow:hidden;box-shadow:0 6px 0 var(--ink);background:var(--paper-2)}
+.runner canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.ani-wrap{position:absolute;left:.5em;top:.4em;height:34%;aspect-ratio:1;z-index:2;pointer-events:none}
+.ani-wrap .ani-svg{width:100%;height:100%}
+.bubble{position:absolute;left:100%;top:6%;margin-left:.7em;background:var(--paper);border:3px solid var(--ink);border-radius:16px;padding:.1em .6em;font-family:var(--f-disp);font-size:1em;white-space:nowrap}
+.bubble::after{content:"";position:absolute;left:-10px;top:calc(50% - 7px);width:13px;height:13px;background:var(--paper);border-left:3px solid var(--ink);border-bottom:3px solid var(--ink);transform:rotate(45deg)}
+.stage.teams .bubble{display:none}
+.stage.teams .ani-wrap{height:26%}
+.stage.teams .nota-card svg{max-height:22vh}
+.phasebox{display:flex;flex-direction:column;align-items:center;gap:.4em;pointer-events:none}
+.phase{font-family:var(--f-disp);font-size:1.6em;line-height:1.1;padding:.12em .6em;border:3px solid var(--ink);border-radius:16px;background:var(--paper);box-shadow:0 4px 0 var(--ink);min-width:4.6em;text-align:center;transition:background .2s}
+.phase.count{background:var(--sun)} .phase.demo{background:var(--peach)} .phase.resp{background:var(--grass)}
+.beats{display:flex;gap:.6em}
+.beats i{width:1.25em;height:1.25em;border-radius:50%;border:3px solid var(--ink);background:var(--paper);display:grid;place-items:center;font-style:normal;font-family:var(--f-num);font-weight:700;font-size:.9em;transition:transform .08s}
+.beats i.on{background:var(--sun);transform:scale(1.2)}
+.beats i.on.b0{background:var(--peach)}
+.nota-card{background:var(--paper);border:3px solid var(--ink);border-radius:22px;box-shadow:0 6px 0 var(--ink);padding:.3em .6em;max-width:1200px;width:100%;margin:0 auto;transition:box-shadow .2s}
+.nota-card svg{display:block;width:100%;height:auto;max-height:27vh}
+.stage.fever .nota-card{animation:fever .8s infinite}
+@keyframes fever{0%,100%{box-shadow:0 6px 0 var(--ink),0 0 0 6px var(--sun)}50%{box-shadow:0 6px 0 var(--ink),0 0 0 6px var(--peach)}}
+.drums{display:flex;gap:12px;height:clamp(84px,17vh,200px);flex-shrink:0}
+.drum{position:relative;flex:1;min-width:0;border:4px solid var(--ink);border-radius:30px;cursor:pointer;touch-action:none;-webkit-touch-callout:none;
+  background:radial-gradient(ellipse at 50% 38%, #fff 0 34%, var(--dc) 35%);box-shadow:0 7px 0 var(--ink);color:var(--ink);
+  font-family:var(--f-disp);font-size:2em;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.1;transition:transform .05s, box-shadow .05s}
+.drum small{font-family:var(--f-body);font-size:.42em;opacity:.8}
+.drum.hit{transform:translateY(5px);box-shadow:0 2px 0 var(--ink)}
+.drum .combo{position:absolute;top:.3em;right:.6em;font-family:var(--f-num);font-size:.5em;font-weight:700}
+.pop{position:absolute;left:50%;top:auto;bottom:-.4em;z-index:5;transform:translateX(-50%);font-family:var(--f-disp);font-size:.75em;white-space:nowrap;pointer-events:none;
+  padding:.05em .6em;border-radius:999px;border:2.5px solid var(--ink);background:#fff;animation:popup .7s forwards}
+.pop.p{background:var(--perfect);color:#fff}.pop.g{background:var(--sun)}.pop.m{background:var(--miss);color:#fff}.pop.x{background:#d9d0e6}.pop.h{background:#fff}
+@keyframes popup{0%{opacity:0;transform:translate(-50%,-6px) scale(.7)}20%{opacity:1;transform:translate(-50%,14px) scale(1.1)}100%{opacity:0;transform:translate(-50%,36px) scale(1)}}
+.fly{position:fixed;left:0;top:0;font-size:2em;pointer-events:none;z-index:50}
+
+/* notation */
+.nota .bt{fill:transparent}
+.nota .bt.odd{fill:#f6f1ff}
+.nota .bt.cur{fill:#fff1b8}
+.nota .staff,.nota .bar{stroke:var(--ink);stroke-width:2.2}
+.nota .hd{fill:var(--ink);stroke:var(--ink);stroke-width:1.5}
+.nota .hd.hol{fill:#fff;stroke-width:3}
+.nota .stem{stroke:var(--ink);stroke-width:2.6}
+.nota .fl,.nota .bm,.nota .dt,.nota .rr{fill:var(--ink)}
+.nota .rq{fill:none;stroke:var(--ink);stroke-width:4.4;stroke-linejoin:round;stroke-linecap:round}
+.nota .re{fill:none;stroke:var(--ink);stroke-width:3;stroke-linecap:round}
+.nota .tp{font-family:var(--f-num);font-weight:700;font-size:15px;text-anchor:middle;fill:var(--ink)}
+.nota .sy{font-family:var(--f-num);font-size:13px;font-weight:500;text-anchor:middle;fill:var(--ink-soft)}
+.nota .sy.r{fill:#b5a9c7}
+.nota .ph{fill:var(--peach);opacity:0}
+.nota.run .ph{opacity:.85}
+.nota.resp .ph{fill:var(--grass)}
+.nota .nt.lit .hd{fill:var(--peach);stroke:var(--peach)}
+.nota .nt.lit .hd.hol{fill:#ffe0d6}
+.nota .nt.j-p .hd{fill:var(--perfect);stroke:var(--perfect)}
+.nota .nt.j-g .hd{fill:var(--good);stroke:var(--good)}
+.nota .nt.j-m .hd{fill:var(--miss);stroke:var(--miss)}
+.nota .nt.j-p .hd.hol,.nota .nt.j-g .hd.hol,.nota .nt.j-m .hd.hol{fill:#fff}
+.nota .mk{font-family:var(--f-num);font-weight:700;font-size:14px;text-anchor:middle}
+.nota.hide .nt,.nota.hide .bm,.nota.hide .rq,.nota.hide .re,.nota.hide .rr,.nota.hide .tp,.nota.hide .sy{opacity:.06}
+.nota.hide .nt[class*="j-"]{opacity:1}
+
+/* animal motion */
+.ani-svg .ab{transform-box:fill-box;transform-origin:50% 100%}
+.bop .ab{animation:bop .22s ease-out}
+.happy .ab{animation:jump .45s ease-out}
+.sad .ab{animation:shake .4s}
+@keyframes bop{0%{transform:scale(1)}35%{transform:scale(1.07,.9)}70%{transform:scale(.96,1.06)}100%{transform:scale(1)}}
+@keyframes jump{0%,100%{transform:translateY(0)}40%{transform:translateY(-12%) scale(1.04)}}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+
+.heroes{display:flex;gap:.45em;flex-wrap:wrap}
+.hbtn{font:inherit;color:inherit;border:3px solid var(--ink);border-radius:14px;background:#fff;padding:.2em .3em .15em;display:flex;flex-direction:column;align-items:center;cursor:pointer;width:4.8em}
+.hbtn .hp{width:3em;height:3em}
+.hbtn span{font-size:.8em;font-weight:700}
+.hbtn.on{background:var(--sun);box-shadow:0 3px 0 var(--ink)}
+.trow{display:flex;align-items:center;gap:.5em;flex-wrap:wrap;padding-block:.25em}
+.trow+.trow{border-top:2px dashed #d9d0e6}
+.tlabel{color:#fff;font-weight:900;border:2.5px solid var(--ink);border-radius:999px;padding:.05em .7em;min-width:4em;text-align:center}
+.heroes.small .hbtn{width:4.2em}
+.heroes.small .hbtn .hp{width:2.4em;height:2.4em}
+/* meta progression */
+.hp{position:relative;display:inline-block;width:3em;height:3em;flex-shrink:0}
+.hp svg{position:absolute;inset:0;width:100%;height:100%}
+.me{display:flex;align-items:center;gap:.9em;padding:.55em 1.1em;margin:.2em auto .8em;max-width:34em;width:100%;text-align:left}
+.me .hp{width:3.8em;height:3.8em}
+.me-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:.2em}
+.me-info b{font-family:var(--f-disp);font-weight:400;font-size:1.2em}
+.xpbar{display:block;height:.7em;border:2px solid var(--ink);border-radius:999px;background:#fff;overflow:hidden}
+.xpbar i{display:block;height:100%;background:var(--grass);transition:width .6s}
+.coin{font-family:var(--f-num);font-weight:700;background:#fff3b0;border:2.5px solid var(--ink);border-radius:999px;padding:.05em .8em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.shop-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2.2fr);gap:1.2em;max-width:1400px;width:100%;margin:0 auto;align-items:start}
+@media (max-width:820px){.shop-grid{grid-template-columns:minmax(0,1fr)}}
+.shop-hero{padding:1.2em;text-align:center;display:flex;flex-direction:column;align-items:center;gap:.3em}
+.shop-hero .hp{width:min(11em,50vw);height:min(11em,50vw)}
+.shop-hero h3{font-family:var(--f-disp);font-weight:400;font-size:1.7em;margin:0}
+.items{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,8.5em),1fr));gap:.8em}
+.item{border:3px solid var(--ink);border-radius:16px;background:#fff;padding:.6em .4em;display:flex;flex-direction:column;align-items:center;gap:.3em;text-align:center}
+.item .hp{width:4.4em;height:4.4em}
+.item.cur{background:#fff8d6}
+.item.lockd .hp{filter:grayscale(.9) opacity(.55)}
+.hatonly{display:grid;place-items:center;width:4.4em;height:4.4em}
+.hatonly svg{width:100%;height:100%}
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,16em),1fr));gap:.9em;max-width:1400px;width:100%;margin:0 auto;padding-bottom:1em}
+.bd{display:flex;gap:.8em;align-items:center;padding:.8em 1em;background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:0 4px 0 var(--ink)}
+.bd .ic{font-size:1.7em;width:2em;height:2em;flex-shrink:0;border-radius:50%;display:grid;place-items:center;background:#fff3b0;border:3px solid var(--ink)}
+.bd b{display:block}.bd small{color:var(--ink-soft)}
+.bd.no{background:#f1edf6;box-shadow:none}.bd.no .ic{filter:grayscale(1);opacity:.5;background:#e6e1ec}
+.srow{display:flex;gap:.4em;align-items:center;justify-content:center}
+.srow em{font-style:normal;font-size:.72em;font-weight:700;border:2px solid var(--ink);border-radius:999px;padding:0 .45em;background:#fff}
+.srow .stars{font-size:1.1em}
+.drum .en{position:absolute;left:14%;right:14%;bottom:.5em;height:.5em;border:2px solid var(--ink);border-radius:999px;background:rgba(255,255,255,.75);overflow:hidden}
+.drum .en i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd23f,#ff8e72);transition:width .2s}
+.drum .en.full{box-shadow:0 0 0 3px #ffd23f}
+.drum .en.full i{width:100%!important;background:#ffd23f}
+.phase.gold{background:#ffd23f!important}
+.phase.sight{background:#9fd8ff}
+.reward{width:100%;display:flex;flex-direction:column;gap:.25em;border:2.5px dashed var(--ink-soft);border-radius:16px;padding:.6em 1em;background:#fffbe6;text-align:left}
+.rw{display:flex;justify-content:space-between;gap:1em}
+.rw b{font-family:var(--f-num);font-variant-numeric:tabular-nums}
+.lvup{font-family:var(--f-disp);color:var(--peach);font-size:1.15em;text-align:center}
+.newb{display:flex;flex-wrap:wrap;gap:.4em;justify-content:center}
+.bdg{border:2.5px solid var(--ink);border-radius:999px;background:#fff3b0;padding:.1em .7em;font-weight:700;animation:starin .5s backwards}
+.toast{position:fixed;left:50%;top:max(1em, env(safe-area-inset-top, 0px));transform:translateX(-50%);z-index:60;background:#fff3b0;border:3px solid var(--ink);border-radius:999px;padding:.3em 1.2em;font-weight:700;box-shadow:0 4px 0 var(--ink);pointer-events:none}
+.modenote{font-size:.85em;color:var(--ink-soft);margin:0;flex-basis:100%}
+.micbox{display:flex;flex-direction:column;gap:.5em;padding:.7em .9em;border:2.5px solid var(--ink);border-radius:14px;background:#fff;flex-basis:100%}
+.meter{position:relative;height:1.1em;border:2.5px solid var(--ink);border-radius:999px;background:#f3f0f7;overflow:hidden}
+.meter i{position:absolute;left:0;top:0;bottom:0;width:0;background:linear-gradient(90deg,#7cd05a,#ffd23f,#ff8e72)}
+.meter b{position:absolute;top:-2px;bottom:-2px;width:3px;background:var(--ink)}
+.clapdot{display:inline-grid;place-items:center;width:2.2em;height:2.2em;border-radius:50%;border:3px solid var(--ink);background:#fff;font-size:1.1em;transition:background .1s,transform .1s}
+.clapdot.on{background:var(--peach);transform:scale(1.25)}
+.miclive{position:absolute;left:.7em;top:.45em;font-size:.42em;font-family:var(--f-body);background:#fff;border:2px solid var(--ink);border-radius:999px;padding:0 .7em;display:flex;align-items:center;gap:.4em}
+.miclive i{width:.8em;height:.8em;border-radius:50%;background:#ccc;border:1.5px solid var(--ink)}
+.miclive.on i{background:var(--miss)}
+.sc.act{outline:3px solid var(--ink);transform:scale(1.08)}
+/* wheat farm */
+#scr-farm{--wood:#a8693a;--wood-d:#7a4a26;--straw:#fff4cf;--wheat:#f2c14e;--soil:#8a5a35;--soil-d:#6b4327;--leaf:#6dbb48}
+.farm-sign{font-family:var(--f-disp);font-weight:400;font-size:1.6em;margin:0;color:#fff7e0;background:var(--wood);border:3px solid var(--ink);border-radius:14px;padding:.05em .7em;box-shadow:0 4px 0 var(--ink);text-shadow:0 2px 0 var(--wood-d)}
+.wpill{font-family:var(--f-num);font-weight:700;background:var(--straw);border:2.5px solid var(--ink);border-radius:999px;padding:.05em .8em;white-space:nowrap;font-variant-numeric:tabular-nums}
+.farm-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:1.1em;max-width:1500px;width:100%;margin:0 auto;align-items:start;position:relative;z-index:1}
+@media (max-width:900px){.farm-grid{grid-template-columns:minmax(0,1fr)}}
+.board{background:var(--straw);border:3px solid var(--ink);border-radius:20px;box-shadow:0 6px 0 var(--ink);padding:.9em 1em;display:flex;flex-direction:column;gap:.7em;min-width:0}
+.board.field{background:linear-gradient(var(--wood),var(--wood)) top/100% .9em no-repeat, #f9e7b4;padding-top:1.4em}
+.board h3{font-family:var(--f-disp);font-weight:400;font-size:1.25em;margin:0}
+.plots{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.7em}
+@media (max-width:480px){.plots{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.plot{font:inherit;color:inherit;position:relative;cursor:pointer;border:3px solid var(--ink);border-radius:14px;padding:0;overflow:hidden;
+  background:repeating-linear-gradient(0deg,var(--soil) 0 .55em,var(--soil-d) .55em .7em);aspect-ratio:1/1.08;display:flex;flex-direction:column;justify-content:flex-end;box-shadow:0 4px 0 var(--ink);transition:transform .1s}
+.plot:active{transform:translateY(3px);box-shadow:0 1px 0 var(--ink)}
+.plot svg{position:absolute;inset:0 0 1.3em 0;width:100%;height:calc(100% - 1.3em)}
+.plot .pl{position:relative;z-index:1;background:rgba(255,248,225,.92);border-top:2.5px solid var(--ink);font-size:.78em;font-weight:700;padding:.15em .2em;text-align:center;line-height:1.3;font-variant-numeric:tabular-nums}
+.plot.ripe .pl{background:var(--wheat)}
+.plot.ripe svg{animation:sway 2.4s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes sway{0%,100%{transform:rotate(-2deg)}50%{transform:rotate(2deg)}}
+.plot.locked{background:repeating-linear-gradient(45deg,#d8c7a0 0 .6em,#cdb98e .6em 1.2em)}
+.plot.locked .lk{position:absolute;inset:0 0 1.3em;display:grid;place-items:center;font-size:1.8em}
+.prog{position:absolute;left:8%;right:8%;top:.4em;height:.45em;border:2px solid var(--ink);border-radius:999px;background:#fff;overflow:hidden;z-index:1}
+.prog i{display:block;height:100%;background:var(--leaf)}
+.frow{display:flex;gap:.5em;flex-wrap:wrap;align-items:center}
+.recipes{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,9.5em),1fr));gap:.7em}
+.rc{background:#fff;border:3px solid var(--ink);border-radius:16px;padding:.5em;display:flex;flex-direction:column;align-items:center;gap:.25em;text-align:center}
+.rc .em{font-size:2.4em;line-height:1.1}
+.rc b{font-family:var(--f-disp);font-weight:400;font-size:1.1em}
+.rc .cost{font-size:.82em;font-variant-numeric:tabular-nums}
+.rc .have{font-size:.78em;color:var(--ink-soft)}
+.rc.lockd{background:#efe7d4}.rc.lockd .em{filter:grayscale(1);opacity:.5}
+.inv{display:flex;flex-direction:column;gap:.45em}
+.ir{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto auto;gap:.5em;align-items:center;background:#fff;border:2.5px solid var(--ink);border-radius:14px;padding:.3em .6em}
+.ir .em{font-size:1.6em;text-align:center}
+.ir small{color:var(--ink-soft)}
+.orders{display:flex;flex-direction:column;gap:.6em}
+.od{display:grid;grid-template-columns:3.6em minmax(0,1fr) auto;gap:.6em;align-items:center;background:#fff;border:3px solid var(--ink);border-radius:16px;padding:.45em .7em}
+.od .fc svg{width:3.6em;height:3.6em}
+.od .need{display:flex;flex-wrap:wrap;gap:.3em .7em;font-weight:700}
+.od .need span.ok{color:var(--perfect)}
+.od .rwd{font-family:var(--f-num);font-weight:700}
+.od .acts{display:flex;flex-direction:column;gap:.3em;align-items:stretch}
+.farm-tabs button{font-size:1em}
+.empty-note{color:var(--ink-soft);text-align:center;padding:1em;margin:0}
+.wheatline{position:absolute;left:0;right:0;bottom:0;height:min(18vh,140px);background-repeat:repeat-x;background-size:auto 100%;background-position:bottom;opacity:.9;pointer-events:none;z-index:0}
+.floaty{position:fixed;z-index:70;pointer-events:none;font-family:var(--f-disp);font-size:1.5em;color:var(--ink);text-shadow:0 2px 0 #fff;animation:floaty .9s ease-out forwards}
+@keyframes floaty{from{opacity:1;transform:translate(-50%,0)}to{opacity:0;transform:translate(-50%,-60px)}}
+.clsbtn{font:inherit;color:inherit;cursor:pointer;display:inline-flex;align-items:center;gap:.4em;font-weight:700;background:#fff;border:2.5px solid var(--ink);border-radius:999px;padding:.1em .9em;box-shadow:0 3px 0 var(--ink)}
+.clsbtn small{font-weight:400;color:var(--ink-soft)}
+.clist{display:flex;flex-direction:column;gap:.5em}
+.ci{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.6em;align-items:center;border:2.5px solid var(--ink);border-radius:14px;padding:.45em .7em;background:#fff}
+.ci.cur{background:#fff8d6}
+.ci b{font-family:var(--f-disp);font-weight:400;font-size:1.15em}
+.ci small{display:block;color:var(--ink-soft);font-variant-numeric:tabular-nums}
+.ci .acts{display:flex;gap:.35em;flex-wrap:wrap;justify-content:flex-end}
+.ci input{font:inherit;border:2px solid var(--ink);border-radius:10px;padding:.15em .5em;width:100%}
+.cadd{display:flex;gap:.5em;flex-wrap:wrap}
+.cadd input{font:inherit;flex:1;min-width:8em;border:2.5px solid var(--ink);border-radius:12px;padding:.3em .7em}
+.owners button{display:inline-flex;align-items:center;gap:.3em}
+.owners small{font-family:var(--f-num);color:var(--ink-soft)}
+.gdot{display:inline-block;width:.85em;height:.85em;border-radius:50%;border:2px solid var(--ink)}
+.seeds{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:.4em}
+@media (max-width:560px){.seeds{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.sd{font:inherit;color:inherit;cursor:pointer;background:#fff;border:2.5px solid var(--ink);border-radius:12px;padding:.2em .1em;display:flex;flex-direction:column;align-items:center;line-height:1.2}
+.sd .em{font-size:1.5em}.sd b{font-size:.85em}.sd small{font-family:var(--f-num);font-size:.8em}
+.sd.on{background:var(--sun);box-shadow:0 3px 0 var(--ink)}
+.sd.poor{opacity:.5}
+.grp{display:flex;flex-direction:column;gap:.45em;border-top:2px dashed #d9d0e6;padding-top:.7em}
+.gr{display:flex;align-items:center;gap:.5em}
+.gr input{font:inherit;flex:1;min-width:0;border:2.5px solid var(--ink);border-radius:10px;padding:.2em .6em}
+.gr small{font-family:var(--f-num);color:var(--ink-soft);white-space:nowrap}
+.gsum{display:flex;justify-content:space-between;gap:.6em;align-items:center}
+.pausebar{position:absolute;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;pointer-events:none;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-bottom:max(12px, env(safe-area-inset-bottom, 0px))}
+.pbox{pointer-events:auto;display:flex;align-items:center;gap:.4em 1em;flex-wrap:wrap;justify-content:center;padding:.5em 1em;max-width:100%}
+.ptitle{font-family:var(--f-disp);font-weight:400;font-size:1.3em}
+#scr-play.paused .nota-card{box-shadow:0 6px 0 var(--ink),0 0 0 6px var(--sun)}
+.rst{display:flex;flex-direction:column;gap:.45em;border-top:2px dashed #d9d0e6;padding-top:.7em}
+.rst .note-s{margin:0}
+.btn.warn{background:var(--miss);color:#fff}
+#sync-ov{z-index:40}
+.sbox{display:flex;flex-direction:column;gap:.45em;border:2.5px solid var(--ink);border-radius:16px;padding:.7em .9em;background:#fff}
+.sbox .note-s{margin:0}
+.sbt{font-family:var(--f-disp);font-weight:400;font-size:1.15em}
+.sbox textarea,.tin{font:inherit;font-size:.85em;width:100%;border:2.5px solid var(--ink);border-radius:12px;padding:.35em .6em;resize:vertical;word-break:break-all;background:#fff;color:var(--ink)}
+.sbox select{font:inherit;border:2.5px solid var(--ink);border-radius:999px;padding:.15em .6em;background:#fff;color:var(--ink);max-width:100%}
+.sst{margin:0;font-weight:700}
+.steps{margin:.4em 0;padding-left:1.4em;display:flex;flex-direction:column;gap:.35em;font-size:.9em}
+.steps textarea{margin:.3em 0}
+details summary{cursor:pointer;font-weight:700;color:var(--t2)}
+.warnt{color:var(--miss);font-weight:700;font-size:.85em;white-space:nowrap}.okt{color:var(--perfect);font-weight:700;font-size:.85em;white-space:nowrap}
+/* overlays */
+.ov{position:absolute;inset:0;background:rgba(59,42,82,.45);display:grid;place-items:center;z-index:30;
+  padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:16px}
+.dlg{padding:1.4em 1.6em;max-width:34em;width:100%;max-height:100%;overflow-y:auto;display:flex;flex-direction:column;gap:.9em}
+.dlg h3{font-family:var(--f-disp);font-weight:400;font-size:1.6em;margin:0}
+.cal{display:flex;gap:.8em;align-items:center;flex-wrap:wrap}
+#cal-drum{--dc:var(--t2);flex:0 0 auto;width:6em;height:4em;font-size:1.3em}
+
+/* result */
+#scr-result{align-items:center;justify-content:center}
+.res{padding:1.4em 1.6em;max-width:38em;width:100%;text-align:center;display:flex;flex-direction:column;align-items:center;gap:.6em}
+.res .face{width:9em}
+.res h3{font-family:var(--f-disp);font-weight:400;font-size:2em;margin:0;line-height:1.2}
+.bigstars{font-size:3.4em;line-height:1;letter-spacing:.08em;color:#d9d0e6}
+.bigstars b{color:var(--sun);-webkit-text-stroke:2px var(--ink);font-weight:400;display:inline-block;animation:starin .5s backwards}
+@keyframes starin{from{transform:scale(0) rotate(-90deg)}}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5em;width:100%}
+@media (max-width:480px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.st{border:2.5px solid var(--ink);border-radius:14px;padding:.3em}
+.st b{display:block;font-family:var(--f-num);font-size:1.6em;font-variant-numeric:tabular-nums;line-height:1.2}
+.st.p b{color:var(--perfect)}.st.g b{color:var(--good)}.st.m b{color:var(--miss)}
+.rank{width:100%;display:flex;flex-direction:column;gap:.5em}
+.rk{display:grid;grid-template-columns:2.4em 5em minmax(0,1fr) 4.5em;align-items:center;gap:.6em;text-align:left}
+.rk .pos{font-family:var(--f-num);font-weight:700;font-size:1.4em;text-align:center}
+.rk .tr{height:1.2em;border:2.5px solid var(--ink);border-radius:999px;overflow:hidden;background:#f3f0f7}
+.rk .tr i{display:block;height:100%;background:var(--tc)}
+.rk .v{font-family:var(--f-num);font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+
+@media (prefers-reduced-motion:reduce){
+  .cloud,.parade .pa,.fever-b,.stage.fever .nota-card{animation:none}
+  .bop .ab,.happy .ab,.sad .ab{animation-duration:.01s}
+}
+@media (max-height:520px){.drums,.drums.teams{height:clamp(70px,20vh,120px)}.phase{font-size:1.2em}.runner{min-height:90px}}
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div id="bg" aria-hidden="true"><div class="cloud" style="top:8%;animation-delay:-10s"></div><div class="cloud" style="top:22%;animation-delay:-38s;transform:scale(.7)"></div></div>
+
+  <section id="scr-title" class="screen">
+    <div class="parade" id="parade"></div>
+    <h1 class="logo">節奏小鎮</h1>
+    <p class="tag">跳過節奏障礙，一路闖到龍龍城堡！</p>
+    <button class="clsbtn" id="cls-title" type="button"></button>
+    <div class="card me" id="me"></div>
+    <div class="row">
+      <button class="btn big go" id="b-start">開始冒險</button>
+      <button class="btn alt" id="b-custom">自選節奏</button>
+      <button class="btn" id="b-farm" style="background:var(--sun)">開心農場</button>
+      <button class="btn pk" id="b-shop">角色小屋</button>
+      <button class="btn alt" id="b-badge">徽章</button>
+      <button class="btn alt" id="b-set">設定</button>
+      <button class="btn alt" id="b-fs">全螢幕</button>
+    </div>
+    <ul class="how card">
+      <li><b>有示範</b>：小動物先拍一小節，接著 4 拍預備拍，再換你照樣拍出來</li>
+      <li><b>無示範</b>：看譜、聽 4 下預備拍，接著直接把節奏拍出來</li>
+      <li>拍得準就跳過障礙、賺金幣；集滿能量開啟黃金回合，到角色小屋換新角色和帽子</li>
+    </ul>
+  </section>
+
+  <section id="scr-map" class="screen" hidden>
+    <div class="bar">
+      <button class="btn sm alt" data-go="scr-title">← 首頁</button>
+      <h2>小鎮地圖</h2><button class="clsbtn" id="cls-map" type="button"></button><span class="spacer"></span>
+      <span class="coin" id="map-coin"></span>
+      <button class="btn sm" id="b-farm2">開心農場</button>
+      <button class="btn sm pk" id="b-shop2">角色小屋</button>
+      <button class="btn sm alt" id="b-custom2">自選節奏</button>
+      <button class="btn sm alt" id="b-set2">設定</button>
+    </div>
+    <div class="finder card">
+      <span class="ol">依節奏找關卡</span>
+      <div class="chips" id="finder"></div>
+      <p class="note-s" id="finder-msg">每一關都可以直接點進去玩。點下面的節奏，會標出「第一次教這個節奏」的關卡。</p>
+    </div>
+    <div class="map" id="map"></div>
+  </section>
+
+  <section id="scr-intro" class="screen" hidden>
+    <div class="bar"><button class="btn sm alt" data-go="scr-map">← 地圖</button></div>
+    <div class="intro-grid">
+      <div class="card hero" id="intro-hero"></div>
+      <div class="card panel">
+        <h4 class="sec-t">這一關的新節奏</h4>
+        <div class="pcards" id="intro-new"></div>
+        <h4 class="sec-t">這一關會出現</h4>
+        <div class="chips" id="intro-all"></div>
+        <div id="intro-opts"></div>
+        <div class="row" style="justify-content:flex-start"><button class="btn big go" id="b-go">開始！</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="scr-custom" class="screen" hidden>
+    <div class="bar"><button class="btn sm alt" data-go="scr-title">← 首頁</button><h2>自選節奏練習</h2></div>
+    <div class="card panel" style="max-width:1400px;width:100%;margin:0 auto">
+      <div class="opt"><span class="ol">快速選</span>
+        <div class="row" style="justify-content:flex-start" id="presets"></div>
+      </div>
+      <p class="note-s">點卡片選擇要出現的節奏型，至少選一個有音符的。按「聽」可以先聽聽看。</p>
+      <div class="pcards pick" id="cus-cards"></div>
+      <div id="cus-opts"></div>
+      <p class="err" id="cus-err"></p>
+      <div class="row" style="justify-content:flex-start"><button class="btn big go" id="b-cgo">開始練習</button></div>
+    </div>
+  </section>
+
+  <section id="scr-play" class="screen" hidden>
+    <div class="hud">
+      <button class="btn sm alt" id="b-pause">暫停</button>
+      <span class="lv" id="hud-lv"></span><span class="rd" id="hud-rd"></span>
+      <span class="spacer"></span>
+      <div class="score" id="hud-score"></div>
+    </div>
+    <div class="drums" id="drums"></div>
+    <div class="stage" id="stage">
+      <div class="nota-wrap">
+        <div class="phasebox"><div class="phase" id="phase">準備</div><div class="beats" id="beats"><i class="b0"></i><i></i><i></i><i></i></div></div>
+        <div class="nota-card" id="nota"></div>
+      </div>
+      <div class="runner" id="runner">
+        <canvas id="rc" aria-label="闖關地圖"></canvas>
+        <div class="ani-wrap" id="ani-wrap"><div id="ani" style="height:100%"></div><div class="bubble" id="bubble">準備好囉～</div></div>
+      </div>
+    </div>
+    <div class="bigcount" id="bigcount" aria-live="polite"></div>
+    <div class="pausebar" id="pause-ov" hidden>
+      <div class="card pbox">
+        <b class="ptitle">⏸ 暫停中</b><p class="note-s" id="pause-msg" style="margin:0">看著上面的節奏，一起練習拍拍看！</p>
+        <div class="row"><button class="btn go" id="b-resume">繼續</button><button class="btn alt" id="b-restart">重新開始</button><button class="btn pk" id="b-quit">離開</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="scr-farm" class="screen" hidden>
+    <div class="wheatline" id="wheatline" aria-hidden="true"></div>
+    <div class="bar" style="position:relative;z-index:1">
+      <button class="btn sm alt" id="farm-back">← 返回</button>
+      <h2 class="farm-sign" id="farm-title">開心農場</h2><button class="clsbtn" id="cls-farm" type="button"></button><span class="spacer"></span>
+      <span class="wpill" id="f-coin"></span><span class="wpill" id="f-wheat"></span>
+    </div>
+    <div class="frow" style="position:relative;z-index:1;max-width:1500px;width:100%;margin:0 auto"><span class="ol">誰的田</span><div class="seg owners" id="f-owner"></div></div>
+    <div class="farm-grid">
+      <div class="board field">
+        <div class="frow"><h3 id="f-fieldname">我的麥田</h3><span class="spacer"></span>
+          <button class="btn sm go" id="f-plantall">全部種下</button><button class="btn sm" id="f-harvall">全部收成</button></div>
+        <div class="seeds" id="f-seeds" aria-label="選擇種子"></div>
+        <div class="plots" id="plots"></div>
+        <p class="note-s" id="f-tip">先選種子，再點空地種下。越貴的種子收成越值錢。每次闖關拿到星星，田就會被灌溉，所有作物立刻長大一階。</p>
+      </div>
+      <div class="board">
+        <div class="seg farm-tabs" id="f-tabs" style="align-self:flex-start"><button type="button" data-t="bake" class="on">點心坊</button><button type="button" data-t="sell">倉庫・販賣</button><button type="button" data-t="order">訂單</button></div>
+        <div id="f-panel"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="scr-shop" class="screen" hidden>
+    <div class="bar"><button class="btn sm alt" id="shop-back">← 返回</button><h2>角色小屋</h2><span class="spacer"></span><span class="coin" id="shop-coin"></span></div>
+    <div class="shop-grid">
+      <div class="card shop-hero" id="shop-hero"></div>
+      <div class="card panel">
+        <div class="seg" id="shop-tab" style="align-self:flex-start"><button type="button" data-t="h" class="on">角色</button><button type="button" data-t="t">帽子</button></div>
+        <div class="items" id="shop-items"></div>
+        <p class="note-s">角色小屋用的是「全班」的金幣（選「誰在玩：全班」時闖關、或拿到徽章時獲得）。金幣從闖關獲得：拍到「完美」、完美回合、黃金回合和終點寶箱都有金幣。帽子買一次，每個角色都能戴。</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="scr-badge" class="screen" hidden>
+    <div class="bar"><button class="btn sm alt" data-go="scr-title">← 首頁</button><h2>徽章收集冊</h2><span class="spacer"></span><span class="coin" id="badge-coin"></span></div>
+    <div class="badges" id="badges"></div>
+  </section>
+
+  <section id="scr-result" class="screen" hidden>
+    <div class="card res" id="res"></div>
+  </section>
+
+  <div class="toast" id="toast" hidden></div>
+  <div class="ov" id="sync-ov" hidden>
+    <div class="card dlg" style="max-width:44em">
+      <h3>跨裝置同步・轉移</h3>
+      <p class="note-s" style="margin:0">讓電腦和平板使用同一份班級進度（金幣、經驗、星星、農場、角色、徽章）。</p>
+      <div class="sbox">
+        <b class="sbt">方法一：存檔碼轉移（不用帳號）</b>
+        <p class="note-s">在有最新進度的裝置按「產生存檔碼」，複製後到另一台裝置的「匯入」貼上。適合偶爾搬一次進度。</p>
+        <div class="frow"><select id="ex-scope" aria-label="匯出範圍"></select><button class="btn sm go" id="ex-make" type="button">產生存檔碼</button><button class="btn sm" id="ex-copy" type="button">複製</button><button class="btn sm alt" id="ex-file" type="button">下載成檔案</button></div>
+        <textarea id="ex-code" rows="3" readonly aria-label="存檔碼" placeholder="按「產生存檔碼」後會出現在這裡"></textarea>
+        <b>匯入</b>
+        <textarea id="im-code" rows="3" aria-label="貼上存檔碼" placeholder="把存檔碼或平板連線碼貼在這裡"></textarea>
+        <div class="frow"><button class="btn sm go" id="im-read" type="button">讀取</button><label class="btn sm alt" style="cursor:pointer">開啟存檔檔案<input type="file" id="im-file" accept=".txt,.json,text/plain" hidden></label></div>
+        <p class="err" id="im-msg"></p><div id="im-preview" class="clist"></div>
+      </div>
+      <div class="sbox">
+        <b class="sbt">方法二：即時雲端同步（Firebase）</b>
+        <p class="sst" id="sync-status"></p>
+        <label class="note-s" for="sy-url">Firebase 資料庫網址</label>
+        <input id="sy-url" class="tin" placeholder="https://xxxx-default-rtdb.asia-southeast1.firebasedatabase.app" autocomplete="off" spellcheck="false">
+        <label class="note-s" for="sy-room">房間代碼（自己取，越難猜越好）</label>
+        <input id="sy-room" class="tin" placeholder="例如 tmes-music-8x3k" autocomplete="off" spellcheck="false">
+        <div class="frow"><button class="btn sm go" id="sy-connect" type="button">連線</button><button class="btn sm" id="sy-link" type="button">產生平板連線碼</button><button class="btn sm alt" id="sy-off" type="button" hidden>中斷同步</button></div>
+        <p class="note-s" id="sy-msg" style="color:var(--ink)"></p>
+        <details><summary>第一次使用：怎麼建立免費的 Firebase 資料庫？</summary>
+          <ol class="steps">
+            <li><b>開專案</b>：用電腦打開 console.firebase.google.com，用 Google 帳號登入。按「建立專案／Create a project」，名稱打 rhythm-town（隨意），勾選同意條款按「繼續」。看到 Gemini、Google Analytics 的開關都可以關掉，最後按「建立專案」，等一下再按「繼續」。</li>
+            <li><b>找到資料庫</b>：左側選單找「Databases &amp; Storage（資料庫與儲存空間）」→「Realtime Database」。舊版畫面可能在「建構／Build」底下。按「建立資料庫／Create database」。</li>
+            <li><b>選位置</b>：「Realtime Database 位置」選「新加坡 Singapore (asia-southeast1)」，離台灣最近，按「下一步」。</li>
+            <li><b>選規則模式</b>：選「以鎖定模式啟動／Start in locked mode」，按「啟用／Enable」。不要選測試模式，測試模式 30 天後會自動鎖起來。</li>
+            <li><b>改規則</b>：上方點「規則／Rules」分頁，把框裡原本的文字全部刪掉，貼上下面這段，再按右上角藍色的「發布／Publish」：<textarea id="rules-code" rows="3" readonly>{"rules":{"rhythmtown":{"$room":{".read":true,".write":true}}}}</textarea><button class="btn sm alt" id="rules-copy" type="button">複製規則</button></li>
+            <li><b>複製網址</b>：點回「資料／Data」分頁，資料區最上方有一行 https:// 開頭的網址（旁邊有連結圖示），例如 https://rhythm-town-1a2b3-default-rtdb.asia-southeast1.firebasedatabase.app。整行複製，最後面不要多帶 / 或其他文字。</li>
+            <li><b>連線</b>：回到這個畫面，把網址貼到「Firebase 資料庫網址」，自己取一個房間代碼（英文、數字、- 或 _，4 個字以上），按「連線」。看到 🟢 就成功了。</li>
+            <li><b>平板加入</b>：在電腦按「產生平板連線碼」，用 LINE 或 Google Classroom 傳到平板，在平板打開同一個畫面，貼到「匯入」框，按「讀取」再按「連線」。</li>
+          </ol>
+          <p class="note-s"><b>出現 🔴 時</b>：確認規則有按「發布」、網址整行貼對、遊戲是用 Netlify 網址開啟，學校網路沒有擋 firebasedatabase.app。</p>
+          <p class="note-s">知道網址和房間代碼的人都能修改進度，所以班級和組名請不要用學生的真實姓名。遊戲要用 Netlify 網址開啟，才能連到 Firebase。</p>
+        </details>
+      </div>
+      <div class="row" style="justify-content:flex-end"><button class="btn go" id="sync-close" type="button">完成</button></div>
+    </div>
+  </div>
+  <div class="ov" id="cls-ov" hidden>
+    <div class="card dlg">
+      <h3>選擇班級</h3>
+      <p class="note-s" style="margin:0">每個班級有自己的麥田、金幣、星星、角色和徽章，互不影響。上課前先選好班級再開始。</p>
+      <div class="clist" id="clist"></div>
+      <div class="grp" id="cgroups"></div>
+      <div class="rst" id="creset"></div>
+      <button class="btn sm" id="cls-sync" type="button" style="align-self:flex-start;background:#bfe6ff">📲 跨裝置同步・轉移</button>
+      <form class="cadd" id="cadd"><input id="cadd-name" maxlength="16" placeholder="新增班級，例如：五年三班" aria-label="新班級名稱"><button class="btn sm go" type="submit">新增班級</button></form>
+      <p class="err" id="cls-err"></p>
+      <div class="row" style="justify-content:flex-end"><button class="btn go" id="cls-close" type="button">完成</button></div>
+    </div>
+  </div>
+  <div class="ov" id="set-ov" hidden>
+    <div class="card dlg">
+      <h3>設定</h3>
+      <div class="opt"><label class="ol" for="s-vol">音量</label><input type="range" id="s-vol" min="0" max="1" step="0.05"></div>
+      <div class="opt"><label class="ol" for="s-metro">節拍器</label><input type="range" id="s-metro" min="0" max="1" step="0.05"></div>
+      <div class="opt"><label class="ol" for="s-off">延遲校正</label><input type="range" id="s-off" min="-100" max="300" step="5"><output id="s-offv"></output></div>
+      <p class="note-s">接藍牙喇叭或大電視時聲音常會慢一點，拍得很準卻常被判「差一點」就做一次校正。</p>
+      <div class="cal"><button class="btn sm" id="cal-start">開始校正</button><button class="drum" id="cal-drum">拍</button><span id="cal-msg" class="note-s">按開始後會響 8 聲，跟著聲音點「拍」。</span></div>
+      <button class="btn sm" id="s-sync" type="button" style="align-self:flex-start;background:#bfe6ff">📲 跨裝置同步・轉移（電腦和平板連動）</button>
+      <div class="ttest" id="ttest"><span id="ttest-msg">觸控測試：請幾位同學用手指同時按住這個框</span></div>
+      <div class="row" style="justify-content:space-between">
+        <button class="btn sm alt" id="s-reset">清除這個班級的進度</button>
+        <button class="btn go" id="s-close">完成</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(()=>{
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+
+/* ================= data ================= */
+const P={
+  q:   {name:'四分音符',len:1,ev:[{t:0,d:1}],syl:['ta']},
+  qr:  {name:'四分休止符',len:1,ev:[{t:0,d:1,rest:1}],syl:['休']},
+  ee:  {name:'八分音符（兩個）',len:1,ev:[{t:0,d:.5},{t:.5,d:.5}],syl:['ti','ti'],beam:1},
+  h:   {name:'二分音符',len:2,ev:[{t:0,d:2}],syl:['ta-a']},
+  dh:  {name:'附點二分音符',len:3,ev:[{t:0,d:3,dot:1}],syl:['ta-a-a']},
+  w:   {name:'全音符',len:4,ev:[{t:0,d:4}],syl:['ta-a-a-a']},
+  ssss:{name:'十六分音符（四個）',len:1,ev:[{t:0,d:.25},{t:.25,d:.25},{t:.5,d:.25},{t:.75,d:.25}],syl:['ti','ri','ti','ri'],beam:1},
+  ess: {name:'前八後十六',len:1,ev:[{t:0,d:.5},{t:.5,d:.25},{t:.75,d:.25}],syl:['ti','ti','ri'],beam:1},
+  sse: {name:'前十六後八',len:1,ev:[{t:0,d:.25},{t:.25,d:.25},{t:.5,d:.5}],syl:['ti','ri','ti'],beam:1},
+  re:  {name:'八分休止符＋八分音符',len:1,ev:[{t:0,d:.5,rest:1},{t:.5,d:.5}],syl:['休','ti']},
+  dqe: {name:'附點四分＋八分音符',len:2,ev:[{t:0,d:1.5,dot:1},{t:1.5,d:.5}],syl:['ta-i','ti']},
+  syn: {name:'切分音',len:2,ev:[{t:0,d:.5},{t:.5,d:1},{t:1.5,d:.5}],syl:['ti','ta','ti']},
+  des: {name:'附點八分＋十六分',len:1,ev:[{t:0,d:.75,dot:1},{t:.75,d:.25}],syl:['ti-i','ri'],beam:1},
+  trip:{name:'三連音',len:1,ev:[{t:0,d:1/3},{t:1/3,d:1/3},{t:2/3,d:1/3}],syl:['tri','o','la'],beam:1,tup:3},
+  ses: {name:'小切分',len:1,ev:[{t:0,d:.25},{t:.25,d:.5},{t:.75,d:.25}],syl:['ti','ta','ti'],beam:1}
+};
+const ORDER=['q','qr','ee','h','w','dh','ssss','ess','sse','dqe','re','syn','des','trip','ses'];
+
+const AN={
+  chick:{c:'#ffd84d',b:'#fff1a8',d:'#f2a516',f:880},
+  rabbit:{c:'#fff6f6',b:'#ffffff',d:'#f7a6b8',f:784},
+  frog:{c:'#86d673',b:'#d6f5b4',d:'#3f9d3a',f:392},
+  bear:{c:'#cf9463',b:'#f4d7b8',d:'#7a4b2a',f:330},
+  squirrel:{c:'#f5a25a',b:'#ffe2c2',d:'#b95e1c',f:659},
+  hedgehog:{c:'#f5d4a6',b:'#fff2de',d:'#8a5a3b',f:587},
+  owl:{c:'#ad92dc',b:'#ece2fb',d:'#6b4fa3',f:523},
+  dragon:{c:'#74d9c7',b:'#d8fff7',d:'#2f9c8a',f:440},
+  cat:{c:'#ffb56e',b:'#fff1de',d:'#e07a2e',f:600},dog:{c:'#ecc89f',b:'#fff6ea',d:'#8a5a3b',f:600},
+  penguin:{c:'#4d5f86',b:'#ffffff',d:'#ffb13c',f:600},panda:{c:'#ffffff',b:'#f4f4f4',d:'#3b2a52',f:600},fox:{c:'#ff8a47',b:'#fff3e6',d:'#c4561c',f:600}
+};
+const LV=[
+  {id:1,name:'小雞農場',animal:'chick',item:'🥚',bpm:76,newp:['q','qr','ee'],desc:'幫小雞數蛋！從 ta、ti ti 和四分休止符開始。',sc:['#c9ecff','#eef9ff','#a6de76','#80c95a']},
+  {id:2,name:'兔子菜園',animal:'rabbit',item:'🥕',bpm:80,newp:['h'],desc:'拔蘿蔔要拉長～二分音符 ta-a 登場。',sc:['#ffe1ec','#fff6f9','#a9df7e','#88ca5e']},
+  {id:3,name:'青蛙池塘',animal:'frog',item:'🪷',bpm:80,newp:['w','dh'],desc:'青蛙在荷葉上慢慢等：全音符和附點二分音符。',sc:['#c4f0ea','#effffc','#72d0ba','#4fb79f']},
+  {id:4,name:'小熊麵包店',animal:'bear',item:'🍞',bpm:76,newp:['ssss'],desc:'揉麵團要快快快！四個十六分音符 ti-ri ti-ri。',sc:['#ffe6c4','#fff7ea','#e9bd84','#d49c5c']},
+  {id:5,name:'松鼠森林',animal:'squirrel',item:'🌰',bpm:80,newp:['ess','sse'],desc:'松鼠蹦蹦跳：前八後十六、前十六後八。',sc:['#ffdcbc','#fff3e6','#78b964','#54a046']},
+  {id:6,name:'刺蝟花園',animal:'hedgehog',item:'🌸',bpm:84,newp:['dqe','re'],desc:'刺蝟走一大步再小跳：附點四分音符和八分休止符。',sc:['#f3e2ff','#fcf7ff','#b9e290','#9bd16f']},
+  {id:7,name:'貓頭鷹鐘塔',animal:'owl',item:'🔔',bpm:84,newp:['syn','des'],desc:'鐘聲搖搖擺擺：切分音和附點八分音符。',sc:['#cdc9f6','#efedff','#958ddb','#7068c2']},
+  {id:8,name:'龍龍城堡',animal:'dragon',item:'💎',bpm:88,newp:['trip','ses'],desc:'最終挑戰！三連音、小切分，再加上全部學過的節奏。',sc:['#ffd9d6','#fff2ea','#8ad6c4','#5fc1aa']}
+];
+const SC0=['#c9ecff','#eef9ff','#a6de76','#80c95a'];
+const MAXG=8;
+const TEAM=[['紅組','f','1'],['藍組','j','2'],['綠組','d','3'],['紫組','k','4'],['橘組','s','5'],['粉紅組','l','6'],['青組','a','7'],['咖啡組',';','8']].map(([n,a,b],i)=>({n,c:`var(--t${i+1})`,k:[a,b]}));
+const DEFHERO=['cat','dog','penguin','panda','cat','dog','penguin','panda'];
+const PERF=.075, GOOD=.15;
+
+/* ================= storage ================= */
+const KEY='rhythm-town-v1';
+let S={stars:{},offset:0,vol:.85,metro:.6,syl:true,hide:false,unlockAll:false,players:1,input:'tap',farm:null,turn:false,micSens:6,micLat:null,hero:'cat',mode:'demo',starsS:{},coins:0,earned:0,xp:0,badges:{},ownH:[],ownHat:[],hatOf:{},teamHeroes:DEFHERO.slice(),custom:{sel:['q','qr','ee','h'],bpm:80,rounds:8}};
+try{const v=JSON.parse(localStorage.getItem(KEY));if(v)S=Object.assign(S,v)}catch(e){}
+const CLASS_KEYS=['stars','starsS','coins','earned','xp','badges','ownH','ownHat','hatOf','hero','teamHeroes','farm','groups','ngroups','farmOwner','playAs'];
+function freshClass(){return {stars:{},starsS:{},coins:0,earned:0,xp:0,badges:{},ownH:[],ownHat:[],hatOf:{},hero:'cat',teamHeroes:DEFHERO.slice(),farm:null,groups:null,ngroups:4,farmOwner:'all',playAs:'all'}}
+function pickClass(){const o={};CLASS_KEYS.forEach(k=>o[k]=S[k]);return JSON.parse(JSON.stringify(o))}
+function loadClass(id){const c=S.classes[id];if(!c)return;S.cls=id;Object.assign(S,freshClass(),c.data||{})}
+if(!S.classes||!Object.keys(S.classes).length){S.classes={c1:{name:'我的班級',data:pickClass()}};S.cls='c1'}
+if(!S.classes[S.cls])S.cls=Object.keys(S.classes)[0];
+loadClass(S.cls);
+function save(){try{if(S.classes&&S.classes[S.cls])S.classes[S.cls].data=pickClass();localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(typeof syncSoon==='function'&&SYNC)syncSoon()}
+function className(){return (S.classes[S.cls]||{}).name||'我的班級'}
+
+/* ================= helpers ================= */
+function show(id){$$('.screen').forEach(s=>s.hidden=s.id!==id)}
+function setScene(sc){const b=$('#bg').style;b.setProperty('--sa',sc[0]);b.setProperty('--sb',sc[1]);b.setProperty('--ha',sc[2]);b.setProperty('--hb',sc[3])}
+function retrig(el,c){el.classList.remove(c);void el.offsetWidth;el.classList.add(c)}
+function poolFor(lv){const s=[];LV.forEach(l=>{if(l.id<=lv.id)l.newp.forEach(p=>s.push(p))});return s}
+function starsHTML(n){return '<b>★</b>'.repeat(n)+'★'.repeat(3-n)}
+function unlocked(id){return id>=1&&id<=LV.length}
+function sylStr(id){return P[id].syl.join(' ')}
+
+/* ================= animal art ================= */
+function animalSVG(kind){
+  const a=AN[kind],k='#3b2a52',sw=`stroke="${k}" stroke-width="3.5" stroke-linejoin="round"`;
+  let back='',over='',face='',ey=66,ex=16,er=5.5;
+  let mouth=`<path d="M53 82 q3.5 4.5 7 0 q3.5 4.5 7 0" fill="none" stroke="${k}" stroke-width="3" stroke-linecap="round"/>`;
+  switch(kind){
+    case 'chick':
+      back=`<path d="M60 38 C52 22 42 24 44 31 C50 31 54 33 56 39 Z M60 38 C62 21 74 21 72 29 C66 29 63 32 62 39 Z" fill="${a.d}" ${sw}/>`;
+      over=`<ellipse cx="18" cy="80" rx="9" ry="14" fill="${a.d}" ${sw} transform="rotate(25 18 80)"/><ellipse cx="102" cy="80" rx="9" ry="14" fill="${a.d}" ${sw} transform="rotate(-25 102 80)"/>`;
+      mouth=`<path d="M51 76 L69 76 L60 87 Z" fill="#ff9a3c" ${sw}/>`;break;
+    case 'rabbit':
+      back=`<g transform="rotate(-12 44 44)"><ellipse cx="44" cy="24" rx="11" ry="27" fill="${a.c}" ${sw}/><ellipse cx="44" cy="26" rx="5" ry="18" fill="${a.d}"/></g><g transform="rotate(12 76 44)"><ellipse cx="76" cy="24" rx="11" ry="27" fill="${a.c}" ${sw}/><ellipse cx="76" cy="26" rx="5" ry="18" fill="${a.d}"/></g>`;
+      face=`<ellipse cx="60" cy="76" rx="4.5" ry="3.2" fill="${a.d}" stroke="${k}" stroke-width="1.5"/>`;break;
+    case 'frog':
+      over=`<circle cx="40" cy="42" r="16" fill="${a.c}" ${sw}/><circle cx="80" cy="42" r="16" fill="${a.c}" ${sw}/><circle cx="40" cy="42" r="9.5" fill="#fff"/><circle cx="80" cy="42" r="9.5" fill="#fff"/>`;
+      ey=43;ex=20;
+      mouth=`<path d="M40 80 Q60 96 80 80" fill="none" stroke="${k}" stroke-width="3.5" stroke-linecap="round"/>`;break;
+    case 'bear':
+      back=`<circle cx="26" cy="42" r="15" fill="${a.c}" ${sw}/><circle cx="94" cy="42" r="15" fill="${a.c}" ${sw}/><circle cx="26" cy="42" r="7" fill="${a.b}"/><circle cx="94" cy="42" r="7" fill="${a.b}"/>`;
+      face=`<ellipse cx="60" cy="83" rx="17" ry="12" fill="${a.b}" stroke="${k}" stroke-width="2"/><ellipse cx="60" cy="77" rx="6" ry="4.5" fill="${k}"/>`;
+      mouth=`<path d="M60 81 v4 M53 86 q3.5 4 7 0 q3.5 4 7 0" fill="none" stroke="${k}" stroke-width="2.6" stroke-linecap="round"/>`;break;
+    case 'squirrel':
+      back=`<path d="M84 102 C118 102 120 50 102 36 C88 27 78 41 90 49 C102 57 100 82 82 88 Z" fill="${a.d}" ${sw}/><path d="M32 48 L28 18 L52 38 Z" fill="${a.c}" ${sw}/><path d="M88 48 L92 18 L68 38 Z" fill="${a.c}" ${sw}/>`;break;
+    case 'hedgehog':{
+      let pts=[];for(let i=0;i<=16;i++){const an=Math.PI+i*Math.PI/16,r=i%2?44:58;pts.push((60+r*Math.cos(an)).toFixed(1)+','+(74+r*Math.sin(an)*.95).toFixed(1))}
+      back=`<polygon points="${pts.join(' ')}" fill="${a.d}" ${sw}/>`;
+      face=`<circle cx="60" cy="78" r="4" fill="${k}"/>`;break;}
+    case 'owl':
+      back=`<path d="M28 48 L22 18 L48 38 Z" fill="${a.c}" ${sw}/><path d="M92 48 L98 18 L72 38 Z" fill="${a.c}" ${sw}/>`;
+      over=`<circle cx="44" cy="63" r="14" fill="#fff" ${sw}/><circle cx="76" cy="63" r="14" fill="#fff" ${sw}/>`;
+      face=`<path d="M48 94 q4 4 8 0 M64 94 q4 4 8 0 M56 102 q4 4 8 0" fill="none" stroke="${a.d}" stroke-width="2.6" stroke-linecap="round"/>`;
+      ey=64;mouth=`<path d="M55 75 L65 75 L60 83 Z" fill="#ffb13c" ${sw}/>`;break;
+    case 'dragon':
+      back=`<path d="M17 74 C0 54 4 42 20 48 C24 56 24 64 27 68 Z" fill="${a.d}" ${sw}/><path d="M103 74 C120 54 116 42 100 48 C96 56 96 64 93 68 Z" fill="${a.d}" ${sw}/><path d="M42 40 L36 14 L54 34 Z" fill="#ffd23f" ${sw}/><path d="M78 40 L84 14 L66 34 Z" fill="#ffd23f" ${sw}/>`;
+      face=`<circle cx="55" cy="77" r="1.9" fill="${k}"/><circle cx="65" cy="77" r="1.9" fill="${k}"/>`;
+      mouth=`<path d="M52 84 q8 7 16 0" fill="none" stroke="${k}" stroke-width="3" stroke-linecap="round"/>`;break;
+    case 'cat':
+      back=`<path d="M32 50 L28 18 L54 38 Z" fill="${a.c}" ${sw}/><path d="M88 50 L92 18 L66 38 Z" fill="${a.c}" ${sw}/><path d="M35 42 L33 27 L45 37 Z" fill="#ffb3c1"/><path d="M85 42 L87 27 L75 37 Z" fill="#ffb3c1"/>`;
+      face=`<path d="M57 75 L63 75 L60 79 Z" fill="#ff8fa6"/><path d="M26 77 L42 80 M26 85 L42 84 M94 77 L78 80 M94 85 L78 84" stroke="${k}" stroke-width="2" stroke-linecap="round"/>`;break;
+    case 'dog':
+      over=`<ellipse cx="22" cy="64" rx="11" ry="23" fill="${a.d}" ${sw} transform="rotate(15 22 64)"/><ellipse cx="98" cy="64" rx="11" ry="23" fill="${a.d}" ${sw} transform="rotate(-15 98 64)"/>`;
+      face=`<ellipse cx="60" cy="76" rx="6.5" ry="4.8" fill="${k}"/><ellipse cx="68" cy="58" rx="9" ry="7" fill="${a.d}" opacity=".35"/>`;break;
+    case 'penguin':
+      back=`<ellipse cx="18" cy="84" rx="8" ry="17" fill="${a.c}" ${sw} transform="rotate(22 18 84)"/><ellipse cx="102" cy="84" rx="8" ry="17" fill="${a.c}" ${sw} transform="rotate(-22 102 84)"/>`;
+      over=`<path d="M30 72 C30 48 50 46 60 56 C70 46 90 48 90 72 C90 96 30 96 30 72 Z" fill="#fff"/>`;
+      mouth=`<path d="M52 75 L68 75 L60 84 Z" fill="${a.d}" ${sw}/>`;break;
+    case 'panda':
+      back=`<circle cx="28" cy="42" r="14" fill="${k}" ${sw}/><circle cx="92" cy="42" r="14" fill="${k}" ${sw}/>`;
+      over=`<ellipse cx="43" cy="66" rx="10" ry="13" fill="${k}" transform="rotate(-25 43 66)"/><ellipse cx="77" cy="66" rx="10" ry="13" fill="${k}" transform="rotate(25 77 66)"/><circle cx="44" cy="66" r="6" fill="#fff"/><circle cx="76" cy="66" r="6" fill="#fff"/>`;
+      er=3.6;face=`<ellipse cx="60" cy="77" rx="5.5" ry="3.8" fill="${k}"/>`;break;
+    case 'fox':
+      back=`<path d="M84 102 C118 104 124 66 108 54 C104 74 96 84 82 88 Z" fill="${a.c}" ${sw}/><path d="M108 54 C116 62 118 70 117 78 C110 74 106 66 108 54 Z" fill="#fff"/><path d="M32 50 L26 16 L54 36 Z" fill="${a.c}" ${sw}/><path d="M88 50 L94 16 L66 36 Z" fill="${a.c}" ${sw}/><path d="M28 26 L26 16 L35 22 Z" fill="${k}"/><path d="M92 26 L94 16 L85 22 Z" fill="${k}"/>`;
+      face=`<path d="M38 76 Q60 104 82 76 Q60 86 38 76 Z" fill="#fff"/><circle cx="60" cy="81" r="3.6" fill="${k}"/>`;mouth='';break;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" class="ani-svg" aria-hidden="true"><g class="ab">${back}
+  <ellipse cx="60" cy="74" rx="44" ry="40" fill="${a.c}" ${sw}/><ellipse cx="60" cy="89" rx="26" ry="19" fill="${a.b}"/>${over}${face}
+  <circle cx="${60-ex}" cy="${ey}" r="${er}" fill="${k}"/><circle cx="${60+ex}" cy="${ey}" r="${er}" fill="${k}"/>
+  <circle cx="${62-ex}" cy="${ey-2}" r="1.9" fill="#fff"/><circle cx="${62+ex}" cy="${ey-2}" r="1.9" fill="#fff"/>
+  <ellipse cx="33" cy="81" rx="7" ry="4.5" fill="#ff8fa6" opacity=".75"/><ellipse cx="87" cy="81" rx="7" ry="4.5" fill="#ff8fa6" opacity=".75"/>
+  ${mouth}<ellipse cx="42" cy="112" rx="11" ry="5" fill="${a.d}" ${sw}/><ellipse cx="78" cy="112" rx="11" ry="5" fill="${a.d}" ${sw}/></g></svg>`;
+}
+
+/* ================= notation ================= */
+function baseDur(e){return e.dot?e.d/1.5:e.d}
+function beamsOf(e,p){if(e.rest)return 0;if(p.tup)return 1;const b=baseDur(e);return b<=.26?2:b<=.51?1:0}
+function restSVG(e,x,LY){
+  if(e.d>=4)return `<rect class="rr" x="${x-10}" y="${LY}" width="20" height="8"/>`;
+  if(e.d>=2)return `<rect class="rr" x="${x-10}" y="${LY-8}" width="20" height="8"/>`;
+  if(e.d>=1)return `<path class="rq" d="M${x-3} ${LY-30} L${x+5} ${LY-20} L${x-3} ${LY-10} L${x+5} ${LY} Q${x-8} ${LY-4} ${x+1} ${LY+12}"/>`;
+  return `<circle class="rr" cx="${x-3}" cy="${LY-14}" r="4.5"/><path class="re" d="M${x-3} ${LY-10} Q${x+2} ${LY-8} ${x+6} ${LY-16} L${x-1} ${LY+12}"/>`;
+}
+function renderNota(placed,beats,o={}){
+  const W=100,X0=24,PAD=20,LY=80,ST=32,H=o.syl?134:110,w=X0*2+beats*W;
+  let bg='',body='',n=0;
+  for(let b=0;b<beats;b++)bg+=`<rect class="bt${b%2?' odd':''}" data-b="${b}" x="${X0+b*W+2}" y="24" width="${W-4}" height="${H-28}" rx="12"/>`;
+  body+=`<line class="staff" x1="${X0-6}" x2="${w-X0+6}" y1="${LY}" y2="${LY}"/>`;
+  body+=`<line class="bar" x1="${X0-6}" x2="${X0-6}" y1="${LY-24}" y2="${LY+24}"/><line class="bar" x1="${w-X0+6}" x2="${w-X0+6}" y1="${LY-24}" y2="${LY+24}"/>`;
+  for(const it of placed){
+    const p=P[it.id],xs=p.ev.map(e=>X0+(it.start+e.t)*W+PAD),lv=p.ev.map(e=>beamsOf(e,p));
+    p.ev.forEach((e,i)=>{
+      const x=xs[i];
+      if(e.rest)body+=restSVG(e,x,LY);
+      else{
+        const bd=baseDur(e);
+        let g=`<g class="nt" data-n="${n}" data-x="${x}"><ellipse class="hd${bd>=2?' hol':''}" cx="${x}" cy="${LY}" rx="9.5" ry="6.8" transform="rotate(-22 ${x} ${LY})"/>`;
+        if(bd<4)g+=`<line class="stem" x1="${x+8.3}" x2="${x+8.3}" y1="${LY-3}" y2="${ST}"/>`;
+        if(e.dot)g+=`<circle class="dt" cx="${x+17}" cy="${LY-5}" r="3.2"/>`;
+        if(!p.beam&&lv[i]===1)g+=`<path class="fl" d="M${x+7} ${ST} c1 9 15 12 12 29 c-1 -10 -7 -14 -12 -15 z"/>`;
+        body+=g+'</g>';n++;
+      }
+      if(o.syl&&p.syl[i])body+=`<text class="sy${e.rest?' r':''}" x="${x}" y="${H-9}">${p.syl[i]}</text>`;
+    });
+    if(p.beam){
+      const sx=xs.map(x=>x+8.3),L=sx.length;
+      body+=`<rect class="bm" x="${sx[0]-1.3}" y="${ST}" width="${sx[L-1]-sx[0]+2.6}" height="7"/>`;
+      for(let i=0;i<L;i++){
+        if(lv[i]<2)continue;
+        if(i+1<L&&lv[i+1]>=2)body+=`<rect class="bm" x="${sx[i]-1.3}" y="${ST+11}" width="${sx[i+1]-sx[i]+2.6}" height="7"/>`;
+        else if(!(i>0&&lv[i-1]>=2)){
+          if(i===L-1)body+=`<rect class="bm" x="${sx[i]-12}" y="${ST+11}" width="13.3" height="7"/>`;
+          else body+=`<rect class="bm" x="${sx[i]-1.3}" y="${ST+11}" width="13.3" height="7"/>`;
+        }
+      }
+      if(p.tup)body+=`<text class="tp" x="${(sx[0]+sx[L-1])/2}" y="${ST-6}">3</text>`;
+    }
+  }
+  return `<svg class="nota" viewBox="0 0 ${w} ${H}" role="img" aria-label="節奏譜">${bg}${body}<rect class="ph" x="0" y="20" width="5" height="${H-22}" rx="2.5"/><g class="mks"></g></svg>`;
+}
+function onsetsOf(items){const o=[];items.forEach(it=>P[it.id].ev.forEach(e=>{if(!e.rest)o.push({t:it.start+e.t,d:e.d})}));return o}
+
+/* ================= audio ================= */
+let AC=null,master=null,NB=null,prevOut=null;
+function ensureAC(){
+  if(!AC){
+    AC=new (window.AudioContext||window.webkitAudioContext)();
+    master=AC.createGain();master.connect(AC.destination);AC.onstatechange=onACState;
+    NB=AC.createBuffer(1,AC.sampleRate*.2,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  }
+  if(AC.state==='suspended')AC.resume();
+}
+function onACState(){if(G&&G.running&&!G.paused&&AC.state!=='running'){try{AC.resume()}catch(e){}}}
+function outLat(){return AC.outputLatency||AC.baseLatency||0}
+function click(t,acc,out,loud){
+  const low=typeof MIC!=='undefined'&&MIC.on;
+  const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=low?(acc?300:240):(acc?1760:1180);
+  const v=Math.max(.0002,(loud?.55:.3)*S.metro*S.vol*(acc?1.15:1)*(low?2:1));
+  if(low){g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.004);g.gain.exponentialRampToValueAtTime(.0001,t+.08)}
+  else{g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.05)}o.connect(g);g.connect(out);o.start(t);o.stop(t+.09);
+}
+function tone(t,dur,f,out){
+  const o=AC.createOscillator(),o2=AC.createOscillator(),g=AC.createGain(),g2=AC.createGain();
+  o.type='triangle';o.frequency.value=f;o2.type='sine';o2.frequency.value=f*2;g2.gain.value=.25;
+  o.connect(g);o2.connect(g2);g2.connect(g);g.connect(out);
+  const v=Math.max(.0002,.42*S.vol),hold=Math.max(.09,dur*.78-.04);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+.008);g.gain.exponentialRampToValueAtTime(v*.5,t+.09);
+  g.gain.setValueAtTime(v*.5,t+hold);g.gain.exponentialRampToValueAtTime(.0001,t+hold+.1);
+  o.start(t);o2.start(t);o.stop(t+hold+.15);o2.stop(t+hold+.15);
+}
+function drumSound(t,team){
+  const v=Math.max(.0002,S.vol);
+  const n=AC.createBufferSource();n.buffer=NB;const bp=AC.createBiquadFilter();bp.type='bandpass';bp.frequency.value=1500+team*350;bp.Q.value=1.2;
+  const g=AC.createGain();g.gain.setValueAtTime(.5*v,t);g.gain.exponentialRampToValueAtTime(.0001,t+.08);n.connect(bp);bp.connect(g);g.connect(master);n.start(t);n.stop(t+.1);
+  const o=AC.createOscillator(),g2=AC.createGain();o.frequency.setValueAtTime(220-team*20,t);o.frequency.exponentialRampToValueAtTime(70,t+.12);
+  g2.gain.setValueAtTime(.7*v,t);g2.gain.exponentialRampToValueAtTime(.0001,t+.16);o.connect(g2);g2.connect(master);o.start(t);o.stop(t+.18);
+}
+function fanfare(good){
+  const t=AC.currentTime+.05,notes=good?[523,659,784,1047]:[523,494,440];
+  notes.forEach((f,i)=>tone(t+i*.13,i===notes.length-1?.5:.12,f,master));
+}
+function preview(items,len,freq){
+  ensureAC();
+  if(prevOut){try{prevOut.disconnect()}catch(e){}}
+  prevOut=AC.createGain();prevOut.connect(master);
+  const bpm=G&&G.running?80:(+($('#i-bpm')?.value)||80),spb=60/Math.min(bpm,100);
+  const t0=AC.currentTime+.12,ons=onsetsOf(items);
+  for(let rep=0;rep<2;rep++){
+    const base=t0+rep*len*spb;
+    for(let b=0;b<len;b++)click(base+b*spb,b===0,prevOut,false);
+    ons.forEach(o=>tone(base+o.t*spb,o.d*spb,freq||660,prevOut));
+  }
+}
+
+/* ================= title ================= */
+$('#parade').innerHTML=LV.map((l,i)=>`<div class="pa" style="animation-delay:${-i*.075}s">${animalSVG(l.animal)}</div>`).join('');
+$('#b-start').onclick=()=>{ensureAC();openMap()};
+$('#b-custom').onclick=$('#b-custom2').onclick=()=>{ensureAC();openCustom()};
+$('#b-set').onclick=$('#b-set2').onclick=openSettings;
+$('#b-fs').onclick=()=>{const el=document.documentElement;try{(el.requestFullscreen?el.requestFullscreen():Promise.reject()).catch(()=>{})}catch(e){}};
+$$('[data-go]').forEach(b=>b.onclick=()=>{const id=b.dataset.go;if(id==='scr-map')openMap();else if(id==='scr-title')openTitle();else{setScene(SC0);show(id)}});
+
+/* ================= meta progression ================= */
+const TITLES=['節奏小新手','節奏小學徒','拍子小勇士','節奏探險家','節奏小高手','節奏達人','節奏大師','節奏傳說'];
+function lvInfo(xp){let lv=1,need=60,rem=xp||0;while(rem>=need){rem-=need;lv++;need=60+lv*30}return {lv,rem,need}}
+function titleOf(lv){return TITLES[Math.min(TITLES.length-1,Math.floor((lv-1)/2))]}
+const BADGES=[
+  {id:'first',i:'🏁',n:'第一次闖關',d:'完成任何一關',c:10},
+  {id:'star3',i:'⭐',n:'三星達人',d:'任一關拿到三顆星',c:20},
+  {id:'combo20',i:'🔥',n:'連擊高手',d:'一局內連擊 20 次',c:20},
+  {id:'perfr',i:'✨',n:'完美回合',d:'一個回合全部拍到、沒有多拍',c:10},
+  {id:'golden',i:'🌟',n:'黃金時刻',d:'集滿能量，開啟黃金回合',c:15},
+  {id:'sight1',i:'👀',n:'小小視奏家',d:'在「無示範」模式過關',c:20},
+  {id:'sight3',i:'🎼',n:'視奏三星',d:'在「無示範」模式拿到三顆星',c:30},
+  {id:'team',i:'🤝',n:'團隊合作',d:'完成一次分隊對戰',c:15},
+  {id:'custom',i:'🎛️',n:'自主練習',d:'完成一次自選節奏練習',c:10},
+  {id:'shopper',i:'🎩',n:'新造型',d:'在角色小屋買第一樣東西',c:10},
+  {id:'allclear',i:'🏰',n:'小鎮英雄',d:'「有示範」模式 8 關都過關',c:50},
+  {id:'sightall',i:'🎓',n:'視奏大師',d:'「無示範」模式 8 關都過關',c:80},
+  {id:'rich',i:'💰',n:'小富翁',d:'累積賺到 300 金幣',c:30},
+  {id:'lv5',i:'🚀',n:'節奏高手',d:'玩家等級達到 5 級',c:30},
+  {id:'farm1',i:'🌾',n:'第一次收成',d:'在麥田收成小麥',c:10},
+  {id:'baker',i:'🥖',n:'小小麵包師',d:'在麵包坊做出第一樣產品',c:10},
+  {id:'seller',i:'🏪',n:'開張大吉',d:'第一次在倉庫賣出東西',c:10},
+  {id:'orders5',i:'📦',n:'訂單達人',d:'完成 5 張顧客訂單',c:30},
+  {id:'field12',i:'🚜',n:'大農場主',d:'開墾全部 12 塊田',c:40}
+];
+function award(id){if(S.badges[id])return null;const b=BADGES.find(x=>x.id===id);if(!b)return null;S.badges[id]=Date.now();S.coins+=b.c;S.earned+=b.c;return b}
+let toastT=0;
+function toast(txt){const t=$('#toast');t.textContent=txt;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,2200)}
+function renderMe(){
+  const L=lvInfo(S.xp);
+  $('#me').innerHTML=`${heroPic(S.hero)}<div class="me-info"><b>Lv.${L.lv} ${titleOf(L.lv)}</b><span class="xpbar"><i style="width:${Math.round(L.rem/L.need*100)}%"></i></span><small class="note-s">${L.rem} / ${L.need} 經驗・徽章 ${Object.keys(S.badges).length} / ${BADGES.length}</small></div><span class="coin">全班 🪙 ${S.coins}</span>`;
+}
+function openTitle(){setScene(SC0);renderMe();renderCls();show('scr-title')}
+function esc(t){return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function renderCls(){const t=`🏫 ${esc(className())} <small>切換班級</small>`;['#cls-title','#cls-map','#cls-farm'].forEach(q=>{const e=$(q);if(e)e.innerHTML=t})}
+let clsDel='',clsEdit='',clsBack=null;
+function classSummary(d){
+  const st=Object.values(d.stars||{}).reduce((a,b)=>a+b,0)+Object.values(d.starsS||{}).reduce((a,b)=>a+b,0);
+  const f=d.farm||{},grow=(f.plots||[]).filter(Boolean).length;
+  return `Lv.${lvInfo(d.xp||0).lv}・🪙 ${d.coins||0}・⭐ ${st}・🌾 ${f.wheat||0}・田裡 ${grow} 株`;
+}
+function openClasses(back){if(back)clsBack=back;save();clsDel='';clsEdit='';rstArm='';$('#cls-err').textContent='';drawClasses();$('#cls-ov').hidden=false}
+function drawClasses(){
+  const ids=Object.keys(S.classes);
+  $('#clist').innerHTML=ids.map(id=>{const c=S.classes[id],cur=id===S.cls;
+    if(clsEdit===id)return `<div class="ci cur"><input id="cedit" maxlength="16" value="${esc(c.name)}" aria-label="班級名稱"><div class="acts"><button class="btn sm go" data-save="${id}">儲存</button><button class="btn sm alt" data-cancel="1">取消</button></div></div>`;
+    return `<div class="ci${cur?' cur':''}"><div><b></b><small>${classSummary(c.data||{})}</small></div><div class="acts">
+      ${cur?'<button class="btn sm" disabled>使用中</button>':`<button class="btn sm go" data-pick="${id}">選這班</button>`}
+      <button class="btn sm alt" data-ren="${id}">改名</button>
+      ${ids.length>1?`<button class="btn sm ${clsDel===id?'pk':'alt'}" data-del="${id}">${clsDel===id?'再按一次刪除':'刪除'}</button>`:''}</div></div>`}).join('');
+  // names set as text to keep them safe
+  $$('#clist .ci b').forEach((b,i)=>{const id=ids.filter(x=>x!==clsEdit)[i];b.textContent=S.classes[id].name});
+  drawGroupsEdit();drawReset();
+  $$('#clist [data-pick]').forEach(b=>b.onclick=()=>{save();loadClass(b.dataset.pick);save();drawClasses();refreshAfterClass();toast(`已切換到「${className()}」`)});
+  $$('#clist [data-ren]').forEach(b=>b.onclick=()=>{clsEdit=b.dataset.ren;clsDel='';drawClasses();const i=$('#cedit');i&&i.focus()});
+  $$('#clist [data-cancel]').forEach(b=>b.onclick=()=>{clsEdit='';drawClasses()});
+  $$('#clist [data-save]').forEach(b=>b.onclick=()=>{const v=$('#cedit').value.trim();if(!v){$('#cls-err').textContent='班級名稱不能空白。';return}
+    S.classes[b.dataset.save].name=v;clsEdit='';$('#cls-err').textContent='';save();drawClasses();refreshAfterClass()});
+  $$('#clist [data-del]').forEach(b=>b.onclick=()=>{const id=b.dataset.del;if(clsDel!==id){clsDel=id;drawClasses();return}
+    const nm=S.classes[id].name;delete S.classes[id];if(S.syncBase&&S.syncBase[id]){if(!Array.isArray(S.syncDel))S.syncDel=[];S.syncDel.push(id)}clsDel='';if(id===S.cls)loadClass(Object.keys(S.classes)[0]);save();drawClasses();refreshAfterClass();toast(`已刪除「${nm}」`)});
+}
+$('#cadd').addEventListener('submit',e=>{e.preventDefault();const inp=$('#cadd-name'),v=inp.value.trim();
+  if(!v){$('#cls-err').textContent='請先輸入班級名稱。';return}
+  if(Object.values(S.classes).some(c=>c.name===v)){$('#cls-err').textContent='已經有同名的班級了。';return}
+  save();const id='c'+Date.now().toString(36);S.classes[id]={name:v,data:freshClass()};loadClass(id);save();inp.value='';$('#cls-err').textContent='';
+  drawClasses();refreshAfterClass();toast(`已新增並切換到「${v}」`)});
+$('#cls-close').onclick=()=>{$('#cls-ov').hidden=true;refreshAfterClass()};
+function drawGroupsEdit(){
+  ensureGroups();const el=$('#cgroups');
+  el.innerHTML=`<div class="frow"><b>「<span id="cg-cls"></span>」的分組</b><span class="spacer"></span><span class="note-s">組數</span><div class="seg" id="cg-n">${[2,3,4,5,6,7,8].map(n=>`<button type="button" data-n="${n}" class="${S.ngroups===n?'on':''}">${n}</button>`).join('')}</div></div>
+    ${S.groups.slice(0,S.ngroups).map((g,i)=>`<div class="gr"><i class="gdot" style="background:${GCOLOR[i]}"></i><input data-g="${i}" maxlength="10" aria-label="第 ${i+1} 組名稱"><small>🪙 ${g.coins||0}</small></div>`).join('')}
+    <p class="note-s" style="margin:0">每一組有自己的田和金幣。分組對戰時，第 1 組＝第 1 個鼓（F 鍵）、第 2 組＝第 2 個鼓（J 鍵），依此類推，各組拍到的金幣會存進自己的田。</p>`;
+  $('#cg-cls').textContent=className();
+  $$('#cgroups input[data-g]').forEach(inp=>{const i=+inp.dataset.g;inp.value=S.groups[i].name;
+    inp.onchange=()=>{const v=inp.value.trim();if(!v){inp.value=S.groups[i].name;return}S.groups[i].name=v;save();syncTeamNames()}});
+  $$('#cg-n button').forEach(b=>b.onclick=()=>{S.ngroups=+b.dataset.n;if(S.players>S.ngroups)S.players=S.ngroups;if(S.playAs!=='all'&&S.playAs>=S.ngroups)S.playAs='all';save();drawGroupsEdit()});
+}
+let rstArm='';
+function drawReset(){
+  const el=$('#creset'),nm=esc(className());
+  const btn=(id,label,warn)=>rstArm===id
+    ?`<span class="frow"><b style="color:var(--miss)">${warn}</b><button class="btn sm warn" data-rst="${id}">確定歸零</button><button class="btn sm alt" data-rst-cancel="1">取消</button></span>`
+    :`<button class="btn sm alt" data-rst-arm="${id}">${label}</button>`;
+  el.innerHTML=`<b>「${nm}」歸零</b>
+    <div class="frow">${btn('coins','🪙 金幣與積分歸零',`全班和各組的金幣、經驗等級都會變成 0，確定嗎？`)}</div>
+    <p class="note-s">只把全班、各組的金幣和經驗值（等級）歸零，田裡的作物、星星、角色、徽章都保留。</p>
+    <div class="frow">${btn('all','🧹 整個班級重新開始',`這班的所有進度都會清空（組名保留），確定嗎？`)}</div>
+    <p class="note-s">金幣、經驗、星星、田地作物、點心、角色、帽子、徽章全部清空，只保留班級名稱和組名。</p>`;
+  $$('#creset [data-rst-arm]').forEach(b=>b.onclick=()=>{rstArm=b.dataset.rstArm;drawReset()});
+  $$('#creset [data-rst-cancel]').forEach(b=>b.onclick=()=>{rstArm='';drawReset()});
+  $$('#creset [data-rst]').forEach(b=>b.onclick=()=>{
+    const kind=b.dataset.rst;rstArm='';
+    if(kind==='coins')resetCoins();else resetClassAll();
+    save();drawClasses();refreshAfterClass();toast(kind==='coins'?`「${className()}」的金幣和積分已歸零`:`「${className()}」已重新開始`);
+  });
+}
+function resetCoins(){ensureGroups();S.coins=0;S.earned=0;S.xp=0;S.groups.forEach(g=>{g.coins=0;g.earned=0})}
+function resetClassAll(){if(S.syncReset)S.syncReset[S.cls]=true;ensureGroups();const names=S.groups.map(g=>g.name),ng=S.ngroups;Object.assign(S,freshClass());ensureGroups();S.ngroups=ng;S.groups.forEach((g,i)=>g.name=names[i]||g.name)}
+function refreshAfterClass(){
+  syncTeamNames();renderCls();
+  if(!$('#scr-title').hidden)renderMe();
+  if(!$('#scr-map').hidden)openMap();
+  if(!$('#scr-farm').hidden)openFarm(null,S.farmOwner!=null?S.farmOwner:'all');
+}
+$('#cls-title').onclick=()=>openClasses();$('#cls-map').onclick=()=>openClasses();$('#cls-farm').onclick=()=>openClasses();
+let shopTab='h',shopFrom='title';
+function openShop(from){if(from)shopFrom=from;setScene(SC0);drawShop();show('scr-shop')}
+function drawShop(){
+  $('#shop-coin').textContent='全班 🪙 '+S.coins;
+  const h=S.hero,hat=S.hatOf[h];
+  $('#shop-hero').innerHTML=`${heroPic(h)}<h3>${HNAME[h]}</h3><p class="note-s">個人模式使用的角色${hat?`・戴著${HATS[hat].n}`:''}</p>`;
+  $$('#shop-tab button').forEach(b=>b.classList.toggle('on',b.dataset.t===shopTab));
+  let html='';
+  if(shopTab==='h'){
+    html=HEROES.map(k=>{const own=owned(k),pr=HPRICE[k];
+      const btn=own?(k===h?'<button class="btn sm" disabled>使用中</button>':`<button class="btn sm go" data-use="${k}">選這隻</button>`)
+        :`<button class="btn sm" data-buy="${k}" ${S.coins<pr?'disabled':''}>🪙 ${pr} 解鎖</button>`;
+      return `<div class="item${own?'':' lockd'}${k===h?' cur':''}">${heroPic(k)}<b>${HNAME[k]}</b>${btn}</div>`}).join('');
+  }else{
+    html=`<div class="item${!hat?' cur':''}"><span class="hatonly" style="font-size:2em">🚫</span><b>不戴</b>${hat?'<button class="btn sm alt" data-off="1">脫下</button>':'<button class="btn sm" disabled>目前</button>'}</div>`+
+    Object.entries(HATS).map(([id,o])=>{const own=S.ownHat.includes(id);
+      const btn=own?(hat===id?'<button class="btn sm" disabled>戴著</button>':`<button class="btn sm go" data-wear="${id}">戴上</button>`)
+        :`<button class="btn sm" data-hbuy="${id}" ${S.coins<o.price?'disabled':''}>🪙 ${o.price} 購買</button>`;
+      return `<div class="item${hat===id?' cur':''}"><span class="hp" style="width:4.4em;height:4.4em">${animalSVG(h)}${hatSVG(id)}</span><b>${o.n}</b>${btn}</div>`}).join('');
+  }
+  $('#shop-items').innerHTML=html;
+  const after=msg=>{save();drawShop();if(msg)toast(msg)};
+  $$('#shop-items [data-use]').forEach(b=>b.onclick=()=>{S.hero=b.dataset.use;after()});
+  $$('#shop-items [data-buy]').forEach(b=>b.onclick=()=>{const k=b.dataset.buy;if(S.coins<HPRICE[k])return;S.coins-=HPRICE[k];S.ownH.push(k);S.hero=k;const bd=award('shopper');after(`解鎖了${HNAME[k]}！`+(bd?`　獲得徽章「${bd.n}」`:''))});
+  $$('#shop-items [data-hbuy]').forEach(b=>b.onclick=()=>{const id=b.dataset.hbuy;if(S.coins<HATS[id].price)return;S.coins-=HATS[id].price;S.ownHat.push(id);S.hatOf[S.hero]=id;const bd=award('shopper');after(`買到${HATS[id].n}！`+(bd?`　獲得徽章「${bd.n}」`:''))});
+  $$('#shop-items [data-wear]').forEach(b=>b.onclick=()=>{S.hatOf[S.hero]=b.dataset.wear;after()});
+  $$('#shop-items [data-off]').forEach(b=>b.onclick=()=>{delete S.hatOf[S.hero];after()});
+}
+$$('#shop-tab button').forEach(b=>b.onclick=()=>{shopTab=b.dataset.t;drawShop()});
+$('#shop-back').onclick=()=>{
+  if(shopFrom==='map')openMap();else if(shopFrom==='intro'&&curLv)openIntro(curLv.id);else if(shopFrom==='custom')openCustom();else openTitle();
+};
+function openBadges(){
+  setScene(SC0);$('#badge-coin').textContent='🪙 '+S.coins;
+  $('#badges').innerHTML=BADGES.map(b=>{const got=!!S.badges[b.id];
+    return `<div class="bd${got?'':' no'}"><span class="ic">${b.i}</span><div><b>${b.n}</b><small>${b.d}・獎勵 🪙 ${b.c}${got?'・已獲得':''}</small></div></div>`}).join('');
+  show('scr-badge');
+}
+$('#b-shop').onclick=()=>openShop('title');
+$('#b-shop2').onclick=()=>openShop('map');
+$('#b-badge').onclick=openBadges;
+
+/* ================= farm: whole class + groups, several crops ================= */
+const STAGE_MS=75000,PLOTS_MAX=12,PLOTS_START=6;
+const CROPS=[
+  {id:'wheat',em:'🌾',n:'小麥',seed:4,ms:75000,yield:3,price:2},
+  {id:'corn',em:'🌽',n:'玉米',seed:8,ms:85000,yield:3,price:5},
+  {id:'tomato',em:'🍅',n:'番茄',seed:12,ms:95000,yield:4,price:5},
+  {id:'berry',em:'🍓',n:'草莓',seed:18,ms:105000,yield:4,price:8},
+  {id:'pumpkin',em:'🎃',n:'南瓜',seed:25,ms:115000,yield:2,price:22},
+  {id:'sun',em:'🌻',n:'向日葵',seed:35,ms:130000,yield:3,price:20}
+];
+const CMAP=Object.fromEntries(CROPS.map(c=>[c.id,c]));
+const RECIPES=[
+  {id:'pancake',em:'🥞',n:'鬆餅',need:{wheat:2},c:2,p:12},
+  {id:'bread',em:'🍞',n:'麵包',need:{wheat:3},c:3,p:18},
+  {id:'cookie',em:'🍪',n:'餅乾',need:{wheat:2},c:5,p:16},
+  {id:'popcorn',em:'🍿',n:'爆米花',need:{corn:3},c:2,p:24},
+  {id:'croissant',em:'🥐',n:'可頌',need:{wheat:3},c:6,p:24},
+  {id:'noodle',em:'🍜',n:'番茄麵',need:{wheat:3,tomato:2},c:4,p:36},
+  {id:'pizza',em:'🍕',n:'披薩',need:{wheat:4,tomato:3},c:6,p:52},
+  {id:'jam',em:'🫙',n:'草莓果醬',need:{berry:4},c:4,p:44},
+  {id:'cake',em:'🍰',n:'草莓蛋糕',need:{wheat:4,berry:3},c:8,p:70},
+  {id:'pie',em:'🥧',n:'南瓜派',need:{wheat:3,pumpkin:1},c:5,p:50},
+  {id:'bouquet',em:'💐',n:'向日葵花束',need:{sun:3},c:3,p:80}
+];
+const RMAP=Object.fromEntries(RECIPES.map(r=>[r.id,r]));
+const CUSTOMERS=['chick','rabbit','frog','bear','squirrel','hedgehog','owl','dragon','cat','dog','penguin','panda','fox'];
+const GCOLOR=['#ff7a59','#3fa9f5','#45b83c','#a46ee8','#ff9f1c','#f15bb5','#00b8a9','#9c6644'];
+const GDEF=['紅組','藍組','綠組','紫組','橘組','粉紅組','青組','咖啡組'];
+function freshGroup(i){return {name:GDEF[i]||`第${i+1}組`,coins:0,earned:0,farm:null}}
+function ensureGroups(n){
+  if(!Array.isArray(S.groups))S.groups=[];
+  for(let i=0;i<MAXG;i++)if(!S.groups[i])S.groups[i]=freshGroup(i);
+  S.ngroups=Math.max(2,Math.min(MAXG,S.ngroups||4));if(n&&n>S.ngroups)S.ngroups=Math.min(MAXG,n);
+  if(!Array.isArray(S.teamHeroes))S.teamHeroes=DEFHERO.slice();
+  while(S.teamHeroes.length<MAXG)S.teamHeroes.push(DEFHERO[S.teamHeroes.length]);
+}
+function syncTeamNames(){ensureGroups();TEAM.forEach((t,i)=>t.n=S.groups[i].name||freshGroup(i).name)}
+let farmOwner='all';
+function O(){return farmOwner==='all'?S:S.groups[farmOwner]}
+function ownerName(o){return o==='all'?'全班':S.groups[o].name}
+function farmOf(w){
+  if(!w.farm||typeof w.farm!=='object')w.farm={};
+  const f=w.farm;f.open=f.open||PLOTS_START;f.plots=Array.isArray(f.plots)?f.plots:[];
+  while(f.plots.length<PLOTS_MAX)f.plots.push(null);
+  f.crops=f.crops||{};if(f.wheat){f.crops.wheat=(f.crops.wheat||0)+f.wheat;f.wheat=0}
+  f.inv=f.inv||{};f.orders=Array.isArray(f.orders)?f.orders:[];f.done=f.done||0;f.seen=f.seen||['wheat'];f.seed=f.seed||'wheat';
+  return f;
+}
+function F(){return farmOf(O())}
+function cropOf(pl){return CMAP[pl.c]||CMAP.wheat}
+function plotStage(pl){if(!pl)return -1;return Math.min(3,Math.floor((Date.now()-pl.t)/cropOf(pl).ms)+(pl.b||0))}
+function plotLeft(pl){if(plotStage(pl)>=3)return 0;const ms=cropOf(pl).ms;return Math.max(0,(3-(pl.b||0))*ms-(Date.now()-pl.t))}
+function irrigate(w){const f=farmOf(w);let n=0;f.plots.forEach(pl=>{if(pl&&plotStage(pl)<3){pl.b=(pl.b||0)+1;n++}});return n}
+function cropSVG(st,gold,cid){
+  cid=cid||'wheat';const k='#3b2a52';let g='';
+  if(st===0){g=`<ellipse cx="50" cy="88" rx="30" ry="6" fill="#6b4327"/>`+[30,44,58,70].map((x,i)=>`<ellipse cx="${x}" cy="${86-(i%2)*3}" rx="3.6" ry="2.6" fill="#f2d48a" stroke="${k}" stroke-width="1.5"/>`).join('')}
+  else if(st===1){g=[32,52,70].map((x,i)=>`<path d="M${x} 94 C${x} 84 ${x} 80 ${x} 74" stroke="#4f9a32" stroke-width="3.5" fill="none" stroke-linecap="round"/><path d="M${x} 80 C${x-12} 76 ${x-12} 66 ${x-4} 64 C${x-2} 72 ${x} 76 ${x} 80Z" fill="#7cd05a" stroke="${k}" stroke-width="2"/><path d="M${x} 77 C${x+11} 73 ${x+12} 63 ${x+5} 61 C${x+2} 69 ${x} 73 ${x} 77Z" fill="#8edc68" stroke="${k}" stroke-width="2"/>`).join('')}
+  else if(cid==='wheat'){
+    const ripe=st===3,stem=ripe?(gold?'#e0a21a':'#d8a84a'):'#5aa83a',ear=ripe?(gold?'#ffd23f':'#f2c14e'):'#8fd16a';
+    g=[18,34,50,66,82].map((x,i)=>{const top=ripe?18+(i%2)*8:30+(i%2)*8,lean=(i-2)*3;
+      let e='';for(let j=0;j<5;j++){const y=top+j*7;e+=`<ellipse cx="${x+lean-3.6}" cy="${y+2}" rx="3.4" ry="5.6" transform="rotate(-28 ${x+lean-3.6} ${y+2})" fill="${ear}" stroke="${k}" stroke-width="1.4"/><ellipse cx="${x+lean+3.6}" cy="${y+2}" rx="3.4" ry="5.6" transform="rotate(28 ${x+lean+3.6} ${y+2})" fill="${ear}" stroke="${k}" stroke-width="1.4"/>`}
+      e+=`<ellipse cx="${x+lean}" cy="${top-3}" rx="3" ry="5.4" fill="${ear}" stroke="${k}" stroke-width="1.4"/>`;
+      if(ripe)e+=`<path d="M${x+lean} ${top-7} l-2 -9 M${x+lean-4} ${top+2} l-7 -7 M${x+lean+4} ${top+2} l7 -7" stroke="${stem}" stroke-width="1.4"/>`;
+      return `<path d="M${x} 98 Q${x+lean*.5} 70 ${x+lean} ${top+34}" stroke="${stem}" stroke-width="3" fill="none"/><path d="M${x} 80 q-9 -6 -12 -16 q8 4 12 12z" fill="${ripe?'#e6c272':'#7cd05a'}" stroke="${k}" stroke-width="1.4"/>${e}`}).join('');
+  }else{
+    const tall=cid==='corn'||cid==='sun';
+    g=[26,50,74].map((x,i)=>{const top=tall?(st===3?22:40):(st===3?48:58);
+      return `<path d="M${x} 98 L${x} ${top}" stroke="#4f9a32" stroke-width="3.5"/><path d="M${x} ${top+28} c-16 -2 -20 -14 -18 -20 c8 2 16 8 18 20z" fill="#7cd05a" stroke="${k}" stroke-width="1.6"/><path d="M${x} ${top+18} c16 -2 20 -14 18 -20 c-8 2 -16 8 -18 20z" fill="#8edc68" stroke="${k}" stroke-width="1.6"/>`+
+        (st===3?`<text x="${x}" y="${top+6}" font-size="${cid==='pumpkin'?26:20}" text-anchor="middle">${CMAP[cid].em}</text>`:`<circle cx="${x}" cy="${top}" r="4" fill="#bfe8a0" stroke="${k}" stroke-width="1.4"/>`)}).join('');
+    if(cid==='pumpkin'&&st===3)g=`<path d="M8 90 C30 70 70 70 92 90" stroke="#4f9a32" stroke-width="4" fill="none"/><text x="50" y="82" font-size="42" text-anchor="middle">🎃</text><path d="M30 76 c-10 -10 -4 -20 6 -16 M70 76 c10 -10 4 -20 -6 -16" stroke="#4f9a32" stroke-width="3" fill="none"/>`;
+    if(gold&&st===3)g+=`<text x="84" y="16" font-size="16">✨</text>`;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" aria-hidden="true">${g}</svg>`;
+}
+function floaty(el,txt){
+  const r=el.getBoundingClientRect(),d=document.createElement('div');d.className='floaty';d.textContent=txt;
+  d.style.left=(r.left+r.width/2)+'px';d.style.top=(r.top+r.height*.3)+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),950);
+}
+function fmt(ms){const s=Math.ceil(ms/1000);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0')}
+let farmFrom='title',farmTab='bake',farmTimer=0,farmSig='';
+function openFarm(from,owner){
+  if(from)farmFrom=from;ensureGroups();
+  if(owner!=null)farmOwner=owner;else if(S.farmOwner!=null&&(S.farmOwner==='all'||S.farmOwner<S.ngroups))farmOwner=S.farmOwner;
+  if(farmOwner!=='all'&&farmOwner>=S.ngroups)farmOwner='all';
+  setScene(['#ffe6a3','#fff6d8','#eac25c','#d8a640']);
+  $('#wheatline').style.backgroundImage=`url("data:image/svg+xml;charset=utf-8,${encodeURIComponent(cropSVG(3,false))}")`;
+  renderCls();drawOwners();farmSig='';drawFarm();drawPanel();show('scr-farm');
+  clearInterval(farmTimer);farmTimer=setInterval(()=>{if($('#scr-farm').hidden){clearInterval(farmTimer);return}drawFarm()},1000);
+}
+function drawOwners(){
+  ensureGroups();
+  const opts=['all',...Array.from({length:S.ngroups},(_,i)=>i)];
+  $('#f-owner').innerHTML=opts.map(o=>{const w=o==='all'?S:S.groups[o];
+    return `<button type="button" class="${o===farmOwner?'on':''}" data-o="${o}">${o==='all'?'🏫':`<i class="gdot" style="background:${GCOLOR[o]}"></i>`}<span></span> <small>🪙${w.coins||0}</small></button>`}).join('');
+  $$('#f-owner button').forEach((b,i)=>{b.querySelector('span').textContent=ownerName(opts[i]);
+    b.onclick=()=>{farmOwner=b.dataset.o==='all'?'all':+b.dataset.o;S.farmOwner=farmOwner;save();drawOwners();farmSig='';drawFarm();drawPanel()}});
+  $('#f-fieldname').textContent=`${ownerName(farmOwner)}的田`;
+}
+function pills(){
+  const w=O(),f=F();
+  $('#f-coin').textContent='🪙 '+(w.coins||0);
+  $('#f-wheat').textContent=CROPS.filter(c=>(f.crops[c.id]||0)>0||c.id==='wheat').map(c=>`${c.em} ${f.crops[c.id]||0}`).join('　');
+}
+function drawSeeds(){
+  const f=F(),w=O();
+  $('#f-seeds').innerHTML=CROPS.map(c=>`<button type="button" class="sd${f.seed===c.id?' on':''}${(w.coins||0)<c.seed?' poor':''}" data-s="${c.id}"><span class="em">${c.em}</span><b>${c.n}</b><small>🪙 ${c.seed}</small></button>`).join('');
+  $$('#f-seeds .sd').forEach(b=>b.onclick=()=>{f.seed=b.dataset.s;save();farmSig='';drawFarm();const c=CMAP[f.seed];
+    $('#f-tip').textContent=`${c.em} ${c.n}：種子 🪙 ${c.seed}，約 ${fmt(c.ms*3)} 成熟，收成 ${c.yield} 個，一個賣 🪙 ${c.price}。點空地就會種下。`})
+}
+function drawFarm(){
+  const f=F(),w=O();pills();
+  const sig=farmOwner+'#'+f.plots.map((pl,i)=>i>=f.open?'L':pl?pl.c+plotStage(pl)+':'+Math.ceil(plotLeft(pl)/1000):'E').join('|')+(w.coins||0)+f.seed;
+  if(sig===farmSig)return;farmSig=sig;drawSeeds();
+  const nextCost=20+(f.open-PLOTS_START)*10,sc=CMAP[f.seed];
+  $('#plots').innerHTML=f.plots.map((pl,i)=>{
+    if(i>=f.open){return i===f.open?`<button class="plot locked" data-i="${i}"><span class="lk">🔒</span><span class="pl">開墾 🪙 ${nextCost}</span></button>`
+      :`<button class="plot locked" data-i="${i}" disabled style="opacity:.55"><span class="lk">🔒</span><span class="pl">尚未開放</span></button>`}
+    if(!pl)return `<button class="plot" data-i="${i}"><span class="pl">空地・種${sc.n} 🪙 ${sc.seed}</span></button>`;
+    const st=plotStage(pl),c=cropOf(pl);
+    if(st>=3)return `<button class="plot ripe" data-i="${i}">${cropSVG(3,pl.g,c.id)}<span class="pl">${pl.g?'大豐收！':c.n+'可以收成！'}</span></button>`;
+    return `<button class="plot" data-i="${i}">${cropSVG(st,pl.g,c.id)}<span class="prog"><i style="width:${Math.max(4,(st/3)*100)}%"></i></span><span class="pl">${c.em}${['剛種下','發芽了','長高了'][st]}・${fmt(plotLeft(pl))}</span></button>`;
+  }).join('');
+  $$('#plots .plot').forEach(b=>b.onclick=()=>plotTap(+b.dataset.i,b));
+}
+function plant(f,w,i){const c=CMAP[f.seed];if((w.coins||0)<c.seed)return false;w.coins-=c.seed;f.plots[i]={t:Date.now(),b:0,g:Math.random()<.15,c:c.id};if(!f.seen.includes(c.id))f.seen.push(c.id);return true}
+function plotTap(i,el){
+  const f=F(),w=O(),pl=f.plots[i];
+  if(i>=f.open){const cost=20+(f.open-PLOTS_START)*10;if(i!==f.open)return;
+    if((w.coins||0)<cost){toast(`開墾需要 🪙 ${cost}，再去闖關賺金幣吧！`);return}
+    w.coins-=cost;f.open++;floaty(el,`-🪙${cost}`);let bd=null;if(f.open>=PLOTS_MAX)bd=award('field12');save();farmSig='';drawOwners();drawFarm();toast('開墾了一塊新田！'+(bd?`　獲得徽章「${bd.n}」`:''));return}
+  if(!pl){const c=CMAP[f.seed];
+    if(!plant(f,w,i)){toast(`${c.n}種子要 🪙 ${c.seed}，金幣不夠！換便宜的種子，或去闖關賺金幣吧。`);return}
+    save();floaty(el,`-🪙${c.seed}`);farmSig='';drawOwners();drawFarm();return}
+  if(plotStage(pl)>=3){harvest(f,i,el);save();farmSig='';drawFarm();drawPanel();return}
+  toast(`${cropOf(pl).n}還要 ${fmt(plotLeft(pl))} 才能收成。闖關拿到星星，作物會長快一點！`);
+}
+function harvest(f,i,el){
+  const pl=f.plots[i],c=cropOf(pl),n=c.yield*(pl.g?2:1);f.crops[c.id]=(f.crops[c.id]||0)+n;f.plots[i]=null;
+  if(el)floaty(el,`+${c.em}${n}`);
+  const bd=award('farm1');if(bd)toast(`獲得徽章「${bd.n}」 +🪙${bd.c}`);
+  return n;
+}
+$('#f-plantall').onclick=()=>{
+  const f=F(),w=O(),c=CMAP[f.seed];let n=0;
+  for(let i=0;i<f.open;i++){if(!f.plots[i]&&plant(f,w,i))n++}
+  save();farmSig='';drawOwners();drawFarm();toast(n?`種下 ${n} 塊${c.n}，花了 🪙 ${n*c.seed}`:((w.coins||0)<c.seed?`金幣不夠種${c.n}了`:'田都種滿了！'));
+};
+$('#f-harvall').onclick=()=>{
+  const f=F();let n=0;
+  for(let i=0;i<f.open;i++){const pl=f.plots[i];if(pl&&plotStage(pl)>=3)n+=harvest(f,i,null)}
+  save();farmSig='';drawFarm();drawPanel();toast(n?`收成了 ${n} 個作物！`:'還沒有成熟的作物');
+};
+$$('#f-tabs button').forEach(b=>b.onclick=()=>{farmTab=b.dataset.t;$$('#f-tabs button').forEach(x=>x.classList.toggle('on',x===b));drawPanel()});
+function needStr(need){return Object.entries(need).map(([k,q])=>`${CMAP[k].em} ${q}`).join(' ＋ ')}
+function newOrder(f){
+  const ok=RECIPES.filter(r=>Object.keys(r.need).every(k=>f.seen.includes(k)));
+  const kinds=Math.random()<.45&&ok.length>1?2:1,pick=[...ok].sort(()=>Math.random()-.5).slice(0,kinds),need={};
+  pick.forEach(r=>need[r.id]=1+Math.floor(Math.random()*(kinds===1?3:2)));
+  const base=Object.entries(need).reduce((a,[id,q])=>a+RMAP[id].p*q,0);
+  return {who:CUSTOMERS[Math.floor(Math.random()*CUSTOMERS.length)],need,reward:Math.round(base*1.5)+5};
+}
+function drawPanel(){
+  const f=F(),w=O(),el=$('#f-panel');
+  f.orders=f.orders.filter(o=>o&&Object.keys(o.need).every(id=>RMAP[id]));
+  while(f.orders.length<3)f.orders.push(newOrder(f));
+  pills();
+  const after=()=>{save();drawOwners();drawPanel();pills()};
+  if(farmTab==='bake'){
+    el.innerHTML=`<p class="note-s" style="margin:0 0 .5em">把作物加上一點金幣做成點心，可以賣更多錢，或交給「訂單」上的顧客。種越多種作物，能做的點心越多。</p><div class="recipes">${RECIPES.map(r=>{
+      const has=Object.entries(r.need).every(([k,q])=>(f.crops[k]||0)>=q),can=has&&(w.coins||0)>=r.c,known=Object.keys(r.need).every(k=>f.seen.includes(k));
+      return `<div class="rc${known?'':' lockd'}"><span class="em">${r.em}</span><b>${r.n}</b><span class="cost">${needStr(r.need)} ＋ 🪙 ${r.c}</span><span class="cost">可賣 🪙 ${r.p}</span><span class="have">庫存 ${f.inv[r.id]||0}</span>
+        <button class="btn sm go" data-make="${r.id}" ${can?'':'disabled'}>${known?'製作':'需要新作物'}</button></div>`}).join('')}</div>`;
+    $$('#f-panel [data-make]').forEach(b=>b.onclick=()=>{const r=RMAP[b.dataset.make];
+      if(!Object.entries(r.need).every(([k,q])=>(f.crops[k]||0)>=q)||(w.coins||0)<r.c)return;
+      Object.entries(r.need).forEach(([k,q])=>f.crops[k]-=q);w.coins-=r.c;f.inv[r.id]=(f.inv[r.id]||0)+1;floaty(b,`+1 ${r.em}`);const bd=award('baker');after();if(bd)toast(`獲得徽章「${bd.n}」 +🪙${bd.c}`)});
+  }else if(farmTab==='sell'){
+    const crows=CROPS.filter(c=>(f.crops[c.id]||0)>0),rows=RECIPES.filter(r=>f.inv[r.id]>0);
+    const total=crows.reduce((a,c)=>a+c.price*f.crops[c.id],0)+rows.reduce((a,r)=>a+r.p*f.inv[r.id],0);
+    el.innerHTML=`<div class="frow" style="margin-bottom:.5em"><span class="note-s">全部賣掉可以得到 🪙 ${total}</span><span class="spacer"></span><button class="btn sm pk" id="f-sellall" ${total?'':'disabled'}>全部賣出</button></div>
+      <div class="inv">${crows.map(c=>`<div class="ir"><span class="em">${c.em}</span><span>${c.n} × ${f.crops[c.id]}<br><small>一個 🪙 ${c.price}（做成點心更值錢）</small></span><button class="btn sm alt" data-sell="c:${c.id}">賣 1</button><button class="btn sm" data-sellall="c:${c.id}">全賣</button></div>`).join('')}
+      ${rows.map(r=>`<div class="ir"><span class="em">${r.em}</span><span>${r.n} × ${f.inv[r.id]}<br><small>一個 🪙 ${r.p}</small></span><button class="btn sm alt" data-sell="p:${r.id}">賣 1</button><button class="btn sm" data-sellall="p:${r.id}">全賣</button></div>`).join('')}
+      ${!crows.length&&!rows.length?'<p class="empty-note">倉庫空空的。先去田裡收成，再到點心坊做點心吧！</p>':''}</div>`;
+    const sell=(key,q)=>{const [t,id]=key.split(':'),bag=t==='c'?f.crops:f.inv,price=t==='c'?CMAP[id].price:RMAP[id].p;q=Math.min(q,bag[id]||0);if(!q)return 0;
+      bag[id]-=q;const g=price*q;w.coins=(w.coins||0)+g;w.earned=(w.earned||0)+g;return g};
+    const done=(g,b)=>{if(b&&g)floaty(b,`+🪙${g}`);const bd=award('seller');after();if(bd)toast(`獲得徽章「${bd.n}」 +🪙${bd.c}`)};
+    $$('#f-panel [data-sell]').forEach(b=>b.onclick=()=>done(sell(b.dataset.sell,1),b));
+    $$('#f-panel [data-sellall]').forEach(b=>b.onclick=()=>done(sell(b.dataset.sellall,1e9),b));
+    const sa=$('#f-sellall');if(sa)sa.onclick=()=>{let g=0;CROPS.forEach(c=>g+=sell('c:'+c.id,1e9));RECIPES.forEach(r=>g+=sell('p:'+r.id,1e9));done(g,sa)};
+  }else{
+    el.innerHTML=`<p class="note-s" style="margin:0 0 .5em">小鎮居民想買點心！交貨的獎勵比直接賣掉多。${esc(ownerName(farmOwner))}已完成 ${f.done} 張訂單。</p><div class="orders">${f.orders.map((o,i)=>{
+      const ok=Object.entries(o.need).every(([id,q])=>(f.inv[id]||0)>=q);
+      return `<div class="od"><span class="fc">${animalSVG(o.who)}</span><div><div class="need">${Object.entries(o.need).map(([id,q])=>`<span class="${(f.inv[id]||0)>=q?'ok':''}">${RMAP[id].em} ${RMAP[id].n} ${Math.min(f.inv[id]||0,q)}/${q}</span>`).join('')}</div><span class="rwd">獎勵 🪙 ${o.reward}</span></div>
+        <div class="acts"><button class="btn sm go" data-give="${i}" ${ok?'':'disabled'}>交貨</button><button class="btn sm alt" data-skip="${i}">換一張</button></div></div>`}).join('')}</div>`;
+    $$('#f-panel [data-give]').forEach(b=>b.onclick=()=>{const i=+b.dataset.give,o=f.orders[i];
+      if(!Object.entries(o.need).every(([id,q])=>(f.inv[id]||0)>=q))return;
+      Object.entries(o.need).forEach(([id,q])=>f.inv[id]-=q);w.coins=(w.coins||0)+o.reward;w.earned=(w.earned||0)+o.reward;f.done++;f.orders[i]=newOrder(f);floaty(b,`+🪙${o.reward}`);
+      const bd=f.done>=5?award('orders5'):null;after();toast(`謝謝你！獲得 🪙 ${o.reward}`+(bd?`　徽章「${bd.n}」`:''))});
+    $$('#f-panel [data-skip]').forEach(b=>b.onclick=()=>{f.orders[+b.dataset.skip]=newOrder(f);save();drawPanel()});
+  }
+}
+$('#farm-back').onclick=()=>{clearInterval(farmTimer);if(farmFrom==='map')openMap();else openTitle()};
+$('#b-farm').onclick=()=>openFarm('title');
+$('#b-farm2').onclick=()=>openFarm('map');
+
+/* ================= cross-device: save codes + optional Firebase sync ================= */
+/* Cloud layout: rhythmtown/<room>/classes/<cid> = {epoch, deleted, dev:{<deviceId>:{epoch,num,name,nameTs,prefs,prefsTs,stars,starsS,badges,ownH,ownHat,farms}}}
+   Each device only ever writes its own dev node, so two devices can never overwrite each other.
+   Coins / earned / xp are the sum of every device's contribution; other fields take the newest or the union. */
+var SYNC=null;
+function clone(o){return o==null?o:JSON.parse(JSON.stringify(o))}
+function same(a,b){return JSON.stringify(a===undefined?null:a)===JSON.stringify(b===undefined?null:b)}
+function b64e(str){return btoa(unescape(encodeURIComponent(str)))}
+function b64d(str){return decodeURIComponent(escape(atob(str)))}
+function snap(c){return c?clone({name:c.name,data:c.data}):null}
+const NUMK=['coins','earned','xp'],PREFK=['hero','teamHeroes','hatOf','ngroups','farmOwner','playAs'];
+function numsOf(d){d=d||{};const o={};NUMK.forEach(k=>o[k]=d[k]||0);for(let i=0;i<MAXG;i++){const g=(d.groups||[])[i]||{};o['gc'+i]=g.coins||0;o['ge'+i]=g.earned||0}return o}
+function prefsOf(d){d=d||{};const o={};PREFK.forEach(k=>o[k]=d[k]===undefined?null:clone(d[k]));o.gnames=Array.from({length:MAXG},(_,i)=>i).map(i=>((d.groups||[])[i]||{}).name||null);return o}
+function farmsOf(d){d=d||{};const o={all:d.farm||null};for(let i=0;i<MAXG;i++)o['g'+i]=((d.groups||[])[i]||{}).farm||null;return o}
+function mergeClass(R,L,B){   // 3-way: R + (L - B)
+  const r=R.data||{},l=L.data||{},b=(B&&B.data)||{},o=clone(r)||{};
+  const num=(x,y,z,k)=>Math.max(0,((x||{})[k]||0)+(((y||{})[k]||0)-((z||{})[k]||0)));
+  NUMK.forEach(k=>o[k]=num(r,l,b,k));
+  ['stars','starsS'].forEach(k=>{o[k]=Object.assign({},r[k]||{});Object.entries(l[k]||{}).forEach(([i,v])=>o[k][i]=Math.max(o[k][i]||0,v))});
+  o.badges=Object.assign({},l.badges||{},r.badges||{});
+  ['ownH','ownHat'].forEach(k=>o[k]=[...new Set([...(r[k]||[]),...(l[k]||[])])]);
+  PREFK.forEach(k=>{if(!same(l[k],b[k]))o[k]=clone(l[k])});
+  const pick3=(x,y,z)=>!same(y,z)?clone(y):clone(x);
+  o.farm=pick3(r.farm,l.farm,b.farm);
+  const rg=r.groups||[],lg=l.groups||[],bg=b.groups||[];
+  if(rg.length||lg.length){
+    o.groups=Array.from({length:MAXG},(_,i)=>i).map(i=>{const x=rg[i],y=lg[i],z=bg[i];if(!x&&!y)return freshGroup(i);
+      const g=clone(x||y);g.name=!same((y||{}).name,(z||{}).name)?y.name:((x||{}).name||(y||{}).name);
+      g.coins=num(x,y,z,'coins');g.earned=num(x,y,z,'earned');g.farm=pick3((x||{}).farm,(y||{}).farm,(z||{}).farm);return g});
+  }
+  return {name:!same(L.name,B&&B.name)?L.name:(R.name||L.name),data:o};
+}
+function liveDevs(cc){const ep=cc.epoch||0;return Object.entries(cc.dev||{}).filter(([k,d])=>d&&(d.epoch||0)===ep)}
+function computeMerged(cc){
+  const devs=liveDevs(cc).map(x=>x[1]),d=freshClass();let name=null,nts=-1,prefs=null,pts=-1;
+  const sum={};devs.forEach(v=>{Object.entries(v.num||{}).forEach(([k,n])=>sum[k]=(sum[k]||0)+(+n||0));
+    if((v.nameTs||0)>nts&&v.name){nts=v.nameTs||0;name=v.name}
+    if((v.prefsTs||0)>pts&&v.prefs){pts=v.prefsTs||0;prefs=v.prefs}
+    ['stars','starsS'].forEach(k=>Object.entries(v[k]||{}).forEach(([i,s])=>d[k][i]=Math.max(d[k][i]||0,s)));
+    Object.assign(d.badges,v.badges||{});
+    ['ownH','ownHat'].forEach(k=>d[k]=[...new Set([...d[k],...(v[k]||[])])]);});
+  NUMK.forEach(k=>d[k]=Math.max(0,Math.round(sum[k]||0)));
+  if(prefs)PREFK.forEach(k=>{if(prefs[k]!=null)d[k]=clone(prefs[k])});
+  const farm=key=>{let best=null,ts=-1;devs.forEach(v=>{const f=(v.farms||{})[key];if(f&&(f.ts||0)>ts){ts=f.ts||0;best=f.data||null}});return clone(best)};
+  d.farm=farm('all');
+  d.groups=Array.from({length:MAXG},(_,i)=>i).map(i=>{const g=freshGroup(i);if(prefs&&prefs.gnames&&prefs.gnames[i])g.name=prefs.gnames[i];
+    g.coins=Math.max(0,Math.round(sum['gc'+i]||0));g.earned=Math.max(0,Math.round(sum['ge'+i]||0));g.farm=farm('g'+i);return g});
+  return {name:name||'班級',data:d};
+}
+function devId(){if(!S.devId)S.devId='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);return S.devId}
+function nextOwn(own,L,B,epoch){   // add this device's changes (L - B) into its own record
+  const now=Date.now(),o=clone(own)||{},l=L.data||{},b=(B&&B.data)||{};
+  if((o.epoch||0)!==epoch){Object.keys(o).forEach(k=>delete o[k])}
+  o.epoch=epoch;o.num=o.num||{};
+  const ln=numsOf(l),bn=B?numsOf(b):{};Object.keys(ln).forEach(k=>o.num[k]=(o.num[k]||0)+(ln[k]-(bn[k]||0)));
+  if(!B||L.name!==B.name||!o.name){o.name=L.name;o.nameTs=now}
+  const lp=prefsOf(l);if(!B||!same(lp,prefsOf(b))){o.prefs=lp;o.prefsTs=now}
+  ['stars','starsS','badges'].forEach(k=>o[k]=clone(l[k]||{}));['ownH','ownHat'].forEach(k=>o[k]=clone(l[k]||[]));
+  const lf=farmsOf(l),bf=B?farmsOf(b):{};o.farms=o.farms||{};
+  Object.keys(lf).forEach(k=>{if(!B||!same(lf[k],bf[k]))o.farms[k]={ts:now,data:lf[k]}});
+  return o;
+}
+function syncInit(){
+  SYNC={es:null,t:0,pt:0,poll:0,busy:false,again:false,status:'off',msg:''};
+  ['syncBase','syncReset'].forEach(k=>{if(!S[k]||typeof S[k]!=='object')S[k]={}});
+  if(!Array.isArray(S.syncDel))S.syncDel=[];
+  devId();
+  if(S.sync&&S.sync.on&&S.sync.url&&S.sync.room)syncConnect(false);
+}
+function cloudOn(){return !!(SYNC&&S.sync&&S.sync.on&&S.sync.url&&S.sync.room)}
+function roomURL(p){return S.sync.url.replace(/\/+$/,'')+'/rhythmtown/'+S.sync.room+(p||'')+'.json'}
+function setSync(st,msg){if(!SYNC)return;SYNC.status=st;SYNC.msg=msg||'';drawSyncStatus()}
+function syncSoon(){if(!cloudOn())return;clearTimeout(SYNC.t);SYNC.t=setTimeout(syncPush,1200)}
+async function getJSON(u){const r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error('HTTP '+r.status);return r.json()}
+async function putJSON(u,body){const r=await fetch(u,{method:'PUT',body:JSON.stringify(body)});if(!r.ok)throw new Error('HTTP '+r.status)}
+function syncRefreshUI(){
+  if(G&&G.running)return;
+  try{refreshAfterClass()}catch(e){}
+  if(!$('#cls-ov').hidden)drawClasses();
+}
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function setLocalFromMerged(id,M,L){   // L = local snapshot the merge was based on
+  if(!S.classes[id])return false;
+  if(id===S.cls)S.classes[id].data=pickClass();
+  const now=snap(S.classes[id]);
+  S.classes[id]=(!L||same(now,L))?clone(M):mergeClass(M,now,L);
+  return id===S.cls;
+}
+async function syncPush(){
+  if(!cloudOn())return;
+  if(SYNC.busy){SYNC.again=true;return}
+  SYNC.busy=true;setSync('busy');let curChanged=false;
+  try{
+    if(S.classes[S.cls])S.classes[S.cls].data=pickClass();
+    for(const id of [...S.syncDel]){await putJSON(roomURL('/classes/'+id+'/deleted'),true);delete S.syncBase[id];S.syncDel=S.syncDel.filter(x=>x!==id)}
+    for(const id of Object.keys(S.classes)){
+      const L=snap(S.classes[id]),reset=!!S.syncReset[id];let B=reset?null:S.syncBase[id];
+      if(B&&same(B,L))continue;
+      const cc=(await getJSON(roomURL('/classes/'+id)))||{};
+      let epoch=cc.epoch||0;
+      if(reset){epoch+=1;cc.epoch=epoch;await putJSON(roomURL('/classes/'+id+'/epoch'),epoch)}
+      const own=nextOwn((cc.dev||{})[devId()],L,B,epoch);
+      await putJSON(roomURL('/classes/'+id+'/dev/'+devId()),own);
+      cc.dev=cc.dev||{};cc.dev[devId()]=own;cc.deleted=false;
+      const M=computeMerged(cc);
+      delete S.syncReset[id];S.syncBase[id]=snap(M);
+      if(setLocalFromMerged(id,M,L))curChanged=true;
+    }
+    if(curChanged&&!(G&&G.running))loadClass(S.cls);
+    persist();setSync('ok');if(curChanged)syncRefreshUI();
+  }catch(e){setSync('err','暫時連不到雲端資料庫。進度先存在這台裝置，恢復連線後會自動補上。')}
+  SYNC.busy=false;if(SYNC.again){SYNC.again=false;syncSoon()}
+}
+async function syncPull(){
+  if(!cloudOn()||SYNC.busy)return;
+  try{
+    const all=(await getJSON(roomURL('/classes')))||{};
+    if(SYNC.busy)return;
+    if(S.classes[S.cls])S.classes[S.cls].data=pickClass();
+    let changedCur=false,changed=false,dirty=false;
+    for(const [id,cc] of Object.entries(all)){
+      if(!cc||S.syncDel.includes(id))continue;
+      if(cc.deleted){if(S.classes[id]&&Object.keys(S.classes).length>1){delete S.classes[id];delete S.syncBase[id];changed=true;if(id===S.cls){S.cls=Object.keys(S.classes)[0];changedCur=true}}continue}
+      if(!liveDevs(cc).length)continue;
+      const M=computeMerged(cc),L=S.classes[id]?snap(S.classes[id]):null,B=S.syncBase[id];
+      if(!L){S.classes[id]=clone(M);S.syncBase[id]=snap(M);changed=true;continue}
+      if(S.syncReset[id]){dirty=true;continue}
+      if(B&&same(B,M))continue;
+      S.classes[id]=B&&same(B,L)?clone(M):mergeClass(M,L,B||M);
+      if(!(B&&same(B,L)))dirty=true;
+      S.syncBase[id]=snap(M);changed=true;if(id===S.cls)changedCur=true;
+    }
+    for(const id of Object.keys(S.classes))if(!S.syncBase[id])dirty=true;
+    if(changedCur&&!(G&&G.running))loadClass(S.cls);
+    persist();setSync('ok');if(changed)syncRefreshUI();if(dirty)syncSoon();
+  }catch(e){setSync('err','暫時連不到雲端資料庫。進度先存在這台裝置，恢復連線後會自動補上。')}
+}
+function closeStream(){if(!SYNC)return;try{SYNC.es&&SYNC.es.close()}catch(e){}SYNC.es=null;clearInterval(SYNC.poll)}
+function openStream(){
+  closeStream();
+  try{const es=new EventSource(roomURL('/classes'));const on=()=>{clearTimeout(SYNC.pt);SYNC.pt=setTimeout(syncPull,600)};
+    es.addEventListener('put',on);es.addEventListener('patch',on);SYNC.es=es}catch(e){}
+  SYNC.poll=setInterval(()=>{if(!document.hidden)syncPull()},20000);
+}
+async function syncConnect(first){
+  if(!SYNC)return false;
+  closeStream();setSync('busy','連線中…');
+  try{
+    const all=(await getJSON(roomURL('/classes')))||{};
+    if(first){
+      if(S.classes[S.cls])S.classes[S.cls].data=pickClass();
+      const byName={},next={},base={};
+      Object.entries(all).forEach(([id,cc])=>{if(cc&&!cc.deleted&&liveDevs(cc).length){const M=computeMerged(cc);byName[M.name]=id;next[id]=M;base[id]=snap(M)}});
+      let cur=null;
+      Object.entries(S.classes).forEach(([id,L])=>{
+        const rid=byName[L.name];
+        if(rid){if(id===S.cls)cur=rid;return}
+        let nid=id;while(next[nid]||all[nid])nid='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+        next[nid]=clone(L);if(id===S.cls)cur=nid;
+      });
+      S.classes=next;S.syncBase=base;S.syncReset={};S.syncDel=[];S.cls=cur&&next[cur]?cur:Object.keys(next)[0];loadClass(S.cls);
+    }
+    S.sync.on=true;save();openStream();setSync('ok');syncRefreshUI();syncPull();
+    return true;
+  }catch(e){
+    if(first)S.sync.on=false;
+    setSync('err',first?'連不上這個資料庫。請確認網址正確、規則已「發布」，而且是用 Netlify 網址開啟遊戲。':'暫時連不到雲端資料庫，進度先存在這台裝置。');
+    return false;
+  }
+}
+function syncDisconnect(){if(!S.sync)return;S.sync.on=false;closeStream();save();setSync('off')}
+
+/* ----- UI ----- */
+function drawSyncStatus(){
+  const el=$('#sync-status');if(!el||!SYNC)return;
+  const on=cloudOn(),st=on?SYNC.status:'off';
+  const txt={off:'⚪ 沒有使用雲端同步（只存在這台裝置）',busy:'🟡 同步中…',ok:'🟢 已連線，進度會自動同步',err:'🔴 '+(SYNC.msg||'同步發生問題')}[st]||'';
+  el.textContent=on&&st==='ok'?`${txt}（房間：${S.sync.room}）`:(st==='busy'&&SYNC.msg?'🟡 '+SYNC.msg:txt);
+  const b=$('#sync-off');if(b)b.hidden=!on;
+  const t=$('#cls-sync');if(t)t.textContent=on?(st==='err'?'📲 同步中斷':'📲 雲端同步中'):'📲 跨裝置同步・轉移';
+}
+function openSync(){
+  if(S.classes[S.cls])S.classes[S.cls].data=pickClass();
+  const sy=S.sync||{};$('#sy-url').value=sy.url||'';$('#sy-room').value=sy.room||'';
+  $('#ex-code').value='';$('#im-code').value='';$('#im-msg').textContent='';$('#im-preview').innerHTML='';$('#sy-msg').textContent='';
+  $('#ex-scope').innerHTML=`<option value="cur">只有「${esc(className())}」</option><option value="all">全部 ${Object.keys(S.classes).length} 個班級</option>`;
+  drawSyncStatus();$('#sync-ov').hidden=false;
+}
+function exportCode(){
+  if(S.classes[S.cls])S.classes[S.cls].data=pickClass();
+  const ids=$('#ex-scope').value==='all'?Object.keys(S.classes):[S.cls],classes={};
+  ids.forEach(id=>classes[id]=snap(S.classes[id]));
+  return 'RT1.'+b64e(JSON.stringify({v:1,at:Date.now(),classes}));
+}
+function linkCode(){return 'RTSYNC1.'+b64e(JSON.stringify({url:S.sync.url,room:S.sync.room}))}
+function copyText(ta,okMsg){
+  const done=()=>toast(okMsg);
+  try{navigator.clipboard.writeText(ta.value).then(done,()=>{ta.focus();ta.select();toast('請長按或按 Ctrl+C 複製選取的文字')})}
+  catch(e){ta.focus();ta.select();toast('請長按或按 Ctrl+C 複製選取的文字')}
+}
+let pendingImport=null;
+function parseImport(txt){
+  txt=(txt||'').trim().replace(/\s+/g,'');
+  if(txt.startsWith('RTSYNC1.')){const o=JSON.parse(b64d(txt.slice(8)));return {link:o}}
+  if(txt.startsWith('RT1.')){const o=JSON.parse(b64d(txt.slice(4)));if(o&&o.classes)return {classes:o.classes,at:o.at}}
+  if(txt.startsWith('{')){const o=JSON.parse(txt);if(o&&o.classes)return {classes:o.classes,at:o.at}}
+  throw new Error('bad');
+}
+function previewImport(){
+  const msg=$('#im-msg'),pv=$('#im-preview');pv.innerHTML='';pendingImport=null;
+  let r;try{r=parseImport($('#im-code').value)}catch(e){msg.textContent='看不懂這段存檔碼。請確認整段都有複製到（開頭是 RT1. 或 RTSYNC1.）。';return}
+  if(r.link){
+    msg.textContent='';$('#sy-url').value=r.link.url||'';$('#sy-room').value=r.link.room||'';
+    pv.innerHTML='<p class="note-s" style="margin:0">這是雲端連線碼，已經幫您填好下方的資料庫網址和房間代碼，按「連線」就可以了。</p>';return}
+  const list=Object.values(r.classes).filter(c=>c&&c.name);
+  if(!list.length){msg.textContent='這段存檔碼裡沒有班級資料。';return}
+  pendingImport=list;msg.textContent='';
+  const names=Object.values(S.classes).map(c=>c.name);
+  pv.innerHTML=`<p class="note-s" style="margin:0">存檔時間：${r.at?new Date(r.at).toLocaleString('zh-TW'):'不明'}</p>`+list.map(c=>`<div class="ci"><div><b></b><small>${classSummary(c.data||{})}</small></div><span class="${names.includes(c.name)?'warnt':'okt'}">${names.includes(c.name)?'會覆蓋這台的同名班級':'新增班級'}</span></div>`).join('')+
+    `<div class="frow"><button class="btn sm warn" id="im-go">確定匯入</button><button class="btn sm alt" id="im-cancel">取消</button></div>`;
+  $$('#im-preview .ci b').forEach((b,i)=>b.textContent=list[i].name);
+  $('#im-cancel').onclick=()=>{pendingImport=null;pv.innerHTML=''};
+  $('#im-go').onclick=()=>{
+    save();let last=null;
+    pendingImport.forEach(c=>{
+      let id=Object.keys(S.classes).find(k=>S.classes[k].name===c.name);
+      if(!id){id='c'+Date.now().toString(36)+Math.random().toString(36).slice(2,5)}
+      S.classes[id]={name:c.name,data:clone(c.data)||freshClass()};
+      if(S.syncBase&&S.syncBase[id]){if(!S.syncReset)S.syncReset={};S.syncReset[id]=true}   // imported data replaces the cloud copy
+      if(id===S.cls||!last)last=id;
+    });
+    loadClass(last);save();pendingImport=null;pv.innerHTML='';
+    toast(`匯入完成，目前班級：「${className()}」`);refreshAfterClass();if(!$('#cls-ov').hidden)drawClasses();
+  };
+}
+$('#ex-make').onclick=()=>{$('#ex-code').value=exportCode();$('#ex-code').select()};
+$('#ex-copy').onclick=()=>{if(!$('#ex-code').value)$('#ex-code').value=exportCode();copyText($('#ex-code'),'已複製存檔碼，到另一台裝置的「匯入」貼上')};
+$('#ex-file').onclick=()=>{
+  const code=$('#ex-code').value||exportCode();$('#ex-code').value=code;
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([code],{type:'text/plain'}));
+    a.download=`節奏小鎮存檔-${new Date().toISOString().slice(0,10)}.txt`;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500);toast('已下載存檔檔案')}
+  catch(e){toast('這裡不能下載檔案，請改用「複製存檔碼」')}
+};
+$('#im-file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('#im-code').value=String(r.result);previewImport()};r.readAsText(f);e.target.value=''};
+$('#im-read').onclick=previewImport;
+$('#sy-connect').onclick=async()=>{
+  const url=$('#sy-url').value.trim().replace(/\/+$/,''),room=$('#sy-room').value.trim();
+  const m=$('#sy-msg');
+  if(!/^https:\/\/[a-z0-9.-]+\.(firebaseio\.com|firebasedatabase\.app)$/i.test(url)){m.textContent='資料庫網址格式不對。應該像 https://xxxx-default-rtdb.asia-southeast1.firebasedatabase.app';return}
+  if(!/^[A-Za-z0-9_-]{4,40}$/.test(room)){m.textContent='房間代碼請用 4～40 個英文字母、數字、- 或 _，例如 tmes-music-8x3k';return}
+  m.textContent='';S.sync={url,room,on:false};
+  const ok=await syncConnect(true);
+  if(ok){m.textContent='連線成功！到其他裝置用「平板連線碼」連到同一個房間，進度就會自動同步。';drawClasses()}
+};
+$('#sy-off').onclick=()=>{syncDisconnect();$('#sy-msg').textContent='已中斷雲端同步。這台裝置的進度還在，之後可以再連線。'};
+$('#sy-link').onclick=()=>{if(!cloudOn()){$('#sy-msg').textContent='請先連線成功，才能產生平板連線碼。';return}$('#ex-code').value=linkCode();copyText($('#ex-code'),'已複製平板連線碼，到平板的「匯入」貼上')};
+$('#sync-close').onclick=()=>{$('#sync-ov').hidden=true;refreshAfterClass();if(!$('#cls-ov').hidden)drawClasses()};
+$('#cls-sync').onclick=openSync;$('#s-sync').onclick=()=>{$('#set-ov').hidden=true;openSync()};
+$('#rules-copy').onclick=()=>copyText($('#rules-code'),'已複製規則');
+
+/* ================= map ================= */
+function openMap(){
+  setScene(SC0);$('#map-coin').textContent='🪙 '+S.coins;renderCls();
+  $('#map').innerHTML=LV.map(l=>{
+    const un=unlocked(l.id),st=S.stars[l.id]||0;
+    return `<button class="node${un?'':' locked'}" data-lv="${l.id}" style="--c:${AN[l.animal].c}" ${un?'':'aria-disabled="true"'}>
+      ${un?'':'<span class="lock">未解鎖</span>'}
+      <span class="lvno">第 ${l.id} 關</span><span class="face">${animalSVG(l.animal)}</span>
+      <span class="nm">${l.name}</span><span class="np" style="min-height:0">${MAPS[l.id].name}</span><span class="nrh">${l.newp.map(p=>`<i>${P[p].name}<b>${sylStr(p)}</b></i>`).join('')}</span>
+      <span class="srow"><em>示範</em><span class="stars">${starsHTML(st)}</span></span>
+      <span class="srow"><em>無示範</em><span class="stars">${starsHTML(S.starsS[l.id]||0)}</span></span></button>`;
+  }).join('');
+  $$('#map .node').forEach(n=>n.onclick=()=>openIntro(+n.dataset.lv));
+  $('#finder').innerHTML=ORDER.map(id=>`<button type="button" class="fchip${mapPick===id?' on':''}" data-p="${id}">${P[id].name} <b>${sylStr(id)}</b></button>`).join('');
+  $$('#finder .fchip').forEach(b=>b.onclick=()=>{mapPick=mapPick===b.dataset.p?null:b.dataset.p;applyPick()});
+  applyPick();
+  show('scr-map');
+}
+
+let mapPick=null;
+function applyPick(){
+  $$('#finder .fchip').forEach(b=>b.classList.toggle('on',b.dataset.p===mapPick));
+  $$('#map .node').forEach(n=>{const l=LV[+n.dataset.lv-1];
+    n.classList.toggle('hit',!!mapPick&&l.newp.includes(mapPick));
+    n.classList.toggle('dim',!!mapPick&&!poolFor(l).includes(mapPick))});
+  const m=$('#finder-msg');
+  if(!mapPick){m.textContent='每一關都可以直接點進去玩。點下面的節奏，會標出「第一次教這個節奏」的關卡。';return}
+  const first=LV.find(l=>l.newp.includes(mapPick)),also=LV.filter(l=>l.id>first.id).map(l=>l.id);
+  m.textContent=`「${P[mapPick].name}」在第 ${first.id} 關「${first.name}」第一次出現`+(also.length?`，第 ${also.join('、')} 關也會混在題目裡。`:'。')+'想只練這個節奏，可以用「自選節奏」。';
+}
+/* ================= options block ================= */
+function optsHTML(p,withRounds){
+  return `<div class="opts">
+  <div class="opt"><span class="ol">模式</span><div class="seg" id="${p}-mode"><button type="button" data-m="demo">有示範・聽了再拍</button><button type="button" data-m="sight">無示範・看譜就拍</button></div><p class="modenote" id="${p}-mnote"></p></div>
+  <div class="opt"><span class="ol">誰來玩</span><div class="seg" id="${p}-players">${[1,...Array.from({length:Math.max(1,(ensureGroups(),S.ngroups)-1)},(_,i)=>i+2)].map(n=>`<button type="button" data-v="${n}">${n===1?'一人或全班':n+' 組'}</button>`).join('')}</div></div>
+  <div class="opt" id="${p}-whorow"><span class="ol">誰在玩</span><div class="seg" id="${p}-who"></div><p class="modenote">金幣和灌溉會給這一組的田。</p></div>
+  <div class="opt" id="${p}-turnrow"><span class="ol">對戰方式</span><div class="seg" id="${p}-turn"><button type="button" data-t="0">同時拍・各隊各一個鼓</button><button type="button" data-t="1">輪流拍・一隊一回合</button></div></div>
+  <div class="opt"><span class="ol">拍打方式</span><div class="seg" id="${p}-input"><button type="button" data-i="tap">點螢幕・按鍵</button><button type="button" data-i="mic">拍手或吹直笛・麥克風</button></div>
+    <div class="micbox" id="${p}-micbox" hidden>
+      <div class="opt"><button type="button" class="btn sm" id="${p}-micon">打開麥克風測試</button><span class="clapdot" id="${p}-clap">👏</span><span class="note-s" id="${p}-micmsg">拍一下手或吹一個直笛音，圓圈亮起來就代表偵測到了。</span></div>
+      <div class="meter" aria-label="麥克風音量"><i id="${p}-lvl"></i><b id="${p}-thr"></b></div>
+      <div class="opt"><label class="ol" for="${p}-sens">靈敏度</label><input type="range" id="${p}-sens" min="1" max="10" step="1"><output id="${p}-sensv"></output></div>
+      <div class="opt"><button type="button" class="btn sm alt" id="${p}-miccal">跟著節拍器拍手校正</button><span class="note-s" id="${p}-calmsg"></span></div>
+      <p class="note-s">拍手、或用直笛吹任何音都可以，兩種可以混著用。吹直笛時每個音都要用舌頭「tu」吐音分開，連著吹不吐音只會算一下。教室很吵時把靈敏度調低；偵測不到時調高。開麥克風後節拍器會變成低音，不會被當成拍手或笛聲。</p>
+    </div></div>
+  <div class="opt" style="align-items:flex-start"><span class="ol" style="padding-top:.4em">角色</span><div id="${p}-heroarea" style="min-width:0;flex:1"></div></div>
+  <div class="opt"><label class="ol" for="${p}-bpm">速度</label><input type="range" id="${p}-bpm" min="56" max="132" step="2"><output id="${p}-bpmv"></output></div>
+  ${withRounds?`<div class="opt"><span class="ol">回合數</span><div class="seg" id="${p}-rounds">${[4,6,8,10,12].map(n=>`<button type="button" data-v="${n}">${n}</button>`).join('')}</div></div>`:''}
+  <div class="opt"><label class="tog"><input type="checkbox" id="${p}-syl"> 譜下顯示唸法</label><label class="tog"><input type="checkbox" id="${p}-hide"> 挑戰：換你拍時把譜藏起來</label></div>
+  <p class="note-s" id="${p}-pnote"></p></div>`;
+}
+function bindOpts(p,bpm,rounds){
+  const segSet=(id,v)=>$$(`#${id} button`).forEach(b=>b.classList.toggle('on',+b.dataset.v===v));
+  const pnote=()=>{
+    const turn=S.players>1&&(S.turn||S.input==='mic');
+    $(`#${p}-turnrow`).hidden=S.players<2;
+    ensureGroups();syncTeamNames();
+    $(`#${p}-whorow`).hidden=S.players>1;
+    const wopts=['all',...Array.from({length:S.ngroups},(_,i)=>i)];
+    $(`#${p}-who`).innerHTML=wopts.map(o=>`<button type="button" data-w="${o}" class="${String(S.playAs)===String(o)?'on':''}">${o==='all'?'🏫 ':`<i class="gdot" style="background:${GCOLOR[o]}"></i> `}<span></span></button>`).join('');
+    $$(`#${p}-who button`).forEach((b,i)=>{b.querySelector('span').textContent=ownerName(wopts[i]);b.onclick=()=>{S.playAs=b.dataset.w==='all'?'all':+b.dataset.w;save();pnote()}});
+    $$(`#${p}-turn button`).forEach(b=>{b.classList.toggle('on',(+b.dataset.t===1)===turn);b.disabled=S.input==='mic'&&b.dataset.t==='0'});
+    $$(`#${p}-input button`).forEach(b=>b.classList.toggle('on',b.dataset.i===S.input));
+    $(`#${p}-micbox`).hidden=S.input!=='mic';
+    let t;
+    if(S.input==='mic')t=S.players>1?`輪流演奏：每一回合輪到一隊（${TEAM.slice(0,S.players).map(x=>x.n).join('→')}），輪到的隊伍拍手或吹直笛，其他隊安靜聽。`:'對著麥克風拍手或吹直笛（任何音都可以，每個音要吐音）。旁邊的同學請保持安靜。';
+    else if(turn)t=`輪流拍：每一回合輪到一隊（${TEAM.slice(0,S.players).map(x=>x.n).join('→')}），輪到的隊伍點大鼓或按任何鍵。`;
+    else if(S.players>1)t=`分組在大電視上同時拍：${TEAM.slice(0,S.players).map(t=>`${t.n} 按 ${t.k[0].toUpperCase()} 或 ${t.k[1]}`).join('、')}，也可以直接點各組的鼓。`;
+    else t='點大鼓、點畫面任何地方，或按空白鍵都可以拍。';
+    if(S.players>1)t+='　各組的金幣會存進自己的田。';
+    $(`#${p}-pnote`).textContent=t;
+  };
+  $$(`#${p}-turn button`).forEach(b=>b.onclick=()=>{S.turn=b.dataset.t==='1';save();pnote()});
+  $$(`#${p}-input button`).forEach(b=>b.onclick=()=>{S.input=b.dataset.i;save();pnote();if(S.input!=='mic')micStop()});
+  const sens=$(`#${p}-sens`),sensv=$(`#${p}-sensv`);sens.value=S.micSens;sensv.textContent=S.micSens;
+  sens.oninput=()=>{S.micSens=+sens.value;sensv.textContent=S.micSens;save()};
+  $(`#${p}-micon`).onclick=async()=>{const ok=await micStart();$(`#${p}-micmsg`).textContent=ok?'麥克風已打開。拍手會亮 👏，吹直笛會亮 🎵。':MIC.err;if(ok)$(`#${p}-micon`).textContent='麥克風已開啟'};
+  $(`#${p}-miccal`).onclick=()=>micCalibrate($(`#${p}-calmsg`));
+  MIC.ui={clap:$(`#${p}-clap`),lvl:$(`#${p}-lvl`),thr:$(`#${p}-thr`)};
+  if(MIC.on)$(`#${p}-micon`).textContent='麥克風已開啟';
+  const mset=()=>{$$(`#${p}-mode button`).forEach(b=>b.classList.toggle('on',b.dataset.m===S.mode));
+    $(`#${p}-mnote`).textContent=S.mode==='sight'?'不播放示範：每回合先看譜、跟著 4 下預備拍數拍子，下一小節直接拍出來。訓練看譜就能拍。':'小動物先拍一小節給你聽，接著 4 拍預備拍（畫面中央會閃 1 2 3 4），再換你照樣拍出來。適合剛學新節奏時。'};
+  mset();$$(`#${p}-mode button`).forEach(b=>b.onclick=()=>{S.mode=b.dataset.m;save();mset()});
+  ensureGroups();if(S.players>S.ngroups)S.players=S.ngroups;
+  segSet(`${p}-players`,S.players);pnote();
+  $$(`#${p}-players button`).forEach(b=>b.onclick=()=>{S.players=+b.dataset.v;save();segSet(`${p}-players`,S.players);pnote()});
+  const heroArea=()=>{
+    ensureGroups();
+    const mine=HEROES.filter(owned);
+    if(!owned(S.hero))S.hero='cat';S.teamHeroes=S.teamHeroes.map((h,i)=>owned(h)?h:DEFHERO[i%DEFHERO.length]);
+    const row=(cur,t)=>`<div class="heroes${t>=0?' small':''}" data-t="${t}">${mine.map(h=>`<button type="button" class="hbtn${h===cur?' on':''}" data-v="${h}" aria-label="${HNAME[h]}" aria-pressed="${h===cur}">${heroPic(h)}<span>${HNAME[h]}</span></button>`).join('')}${t<=0?`<button type="button" class="btn sm pk" data-shop="1" style="align-self:center">解鎖更多</button>`:''}</div>`;
+    $(`#${p}-heroarea`).innerHTML=S.players===1?row(S.hero,-1)
+      :TEAM.slice(0,S.players).map((tm,i)=>`<div class="trow"><span class="tlabel" style="background:${tm.c}">${tm.n}</span>${row(S.teamHeroes[i],i)}</div>`).join('');
+    $$(`#${p}-heroarea [data-shop]`).forEach(b=>b.onclick=()=>openShop(p==='i'?'intro':'custom'));
+    $$(`#${p}-heroarea .heroes`).forEach(rw=>rw.querySelectorAll('.hbtn').forEach(b=>b.onclick=()=>{
+      const t=+rw.dataset.t,v=b.dataset.v;
+      if(t<0)S.hero=v;else S.teamHeroes[t]=v;save();
+      rw.querySelectorAll('.hbtn').forEach(x=>{const on=x===b;x.classList.toggle('on',on);x.setAttribute('aria-pressed',on)});
+      preview([{id:'ee',start:0}],1,700);
+    }));
+  };
+  heroArea();
+  $$(`#${p}-players button`).forEach(b=>b.addEventListener('click',heroArea));
+  $$(`#${p}-players button`).forEach(b=>b.addEventListener('click',pnote));
+  const r=$(`#${p}-bpm`),ov=$(`#${p}-bpmv`);r.value=bpm;ov.textContent='♩ = '+bpm;
+  r.oninput=()=>{ov.textContent='♩ = '+r.value;if(p==='c'){S.custom.bpm=+r.value;save()}};
+  if(rounds){segSet(`${p}-rounds`,rounds);$$(`#${p}-rounds button`).forEach(b=>b.onclick=()=>{S.custom.rounds=+b.dataset.v;save();segSet(`${p}-rounds`,S.custom.rounds)})}
+  const sy=$(`#${p}-syl`),hd=$(`#${p}-hide`);sy.checked=S.syl;hd.checked=S.hide;
+  sy.onchange=()=>{S.syl=sy.checked;save()};hd.onchange=()=>{S.hide=hd.checked;save()};
+}
+function pcardHTML(id,{isNew=false,pick=false,sel=false}={}){
+  const p=P[id];
+  return `<div class="pcard${sel?' sel':''}" data-id="${id}" ${pick?`role="checkbox" tabindex="0" aria-checked="${sel}"`:''}>
+    ${isNew?'<span class="tagnew">新！</span>':''}${pick?`<span class="chk">${sel?'✓':''}</span>`:''}
+    <div class="pc-n">${renderNota([{id,start:0}],p.len,{syl:false})}</div>
+    <div class="pc-name">${p.name}</div><div class="pc-syl">${sylStr(id)}</div>
+    <button type="button" class="btn sm alt pc-play" data-play="${id}">▶ 聽</button></div>`;
+}
+function bindPlayBtns(root,freqFn){$$(root+' [data-play]').forEach(b=>b.onclick=ev=>{ev.stopPropagation();const id=b.dataset.play;preview([{id,start:0}],P[id].len,freqFn())})}
+
+/* ================= intro ================= */
+let curLv=null;
+function openIntro(id){
+  curLv=LV[id-1];setScene(curLv.sc);
+  $('#intro-hero').innerHTML=`<span class="lvno" style="font-family:var(--f-num);font-weight:700;color:var(--ink-soft)">第 ${id} 關</span><div class="face">${animalSVG(curLv.animal)}</div><h3>${curLv.name}</h3><p>${curLv.desc}</p><span class="srow"><em>有示範</em><span class="stars">${starsHTML(S.stars[id]||0)}</span></span><span class="srow"><em>無示範</em><span class="stars">${starsHTML(S.starsS[id]||0)}</span></span><p class="note-s">地圖：${MAPS[id].name}・收集寶物：${curLv.item}</p>`;
+  $('#intro-new').innerHTML=curLv.newp.map(p=>pcardHTML(p,{isNew:true})).join('');
+  bindPlayBtns('#intro-new',()=>AN[curLv.animal].f);
+  $('#intro-all').innerHTML=poolFor(curLv).map(p=>`<span class="chip">${P[p].name}　<b style="font-family:var(--f-num)">${sylStr(p)}</b></span>`).join('');
+  $('#intro-opts').innerHTML=optsHTML('i',false);
+  bindOpts('i',curLv.bpm);
+  show('scr-intro');
+}
+$('#b-go').onclick=()=>{
+  const lv=curLv,pool=poolFor(lv),prev=lv.id>1?LV[lv.id-2].newp:[];
+  const weights={};pool.forEach(p=>weights[p]=lv.newp.includes(p)?3:prev.includes(p)?1.6:1);
+  if(weights.qr)weights.qr*=.6;
+  launch({mode:'level',sight:S.mode==='sight',lv,map:MAPS[lv.id],title:`第${lv.id}關 ${lv.name}`,animal:lv.animal,item:lv.item,pool,weights,required:lv.newp,bpm:+$('#i-bpm').value,nRounds:8,teams:S.players,sc:lv.sc});
+};
+
+/* ================= custom ================= */
+const PRESETS=[
+  {n:'基礎',ids:['q','qr','ee','h']},
+  {n:'長音符',ids:['q','ee','h','dh','w']},
+  {n:'十六分',ids:['q','ee','ssss','ess','sse']},
+  {n:'附點・切分',ids:['q','ee','dqe','re','syn','des']},
+  {n:'三連音・小切分',ids:['q','ee','trip','ses']},
+  {n:'全部',ids:ORDER.slice()},
+  {n:'清除',ids:[]}
+];
+function openCustom(){
+  setScene(SC0);
+  $('#presets').innerHTML=PRESETS.map((p,i)=>`<button class="btn sm ${p.n==='清除'?'alt':''}" data-pr="${i}">${p.n}</button>`).join('');
+  $$('#presets [data-pr]').forEach(b=>b.onclick=()=>{S.custom.sel=PRESETS[+b.dataset.pr].ids.slice();save();drawCards()});
+  drawCards();
+  $('#cus-opts').innerHTML=optsHTML('c',true);
+  bindOpts('c',S.custom.bpm,S.custom.rounds);
+  $('#cus-err').textContent='';
+  show('scr-custom');
+}
+function drawCards(){
+  $('#cus-cards').innerHTML=ORDER.map(id=>pcardHTML(id,{pick:true,sel:S.custom.sel.includes(id)})).join('');
+  bindPlayBtns('#cus-cards',()=>523);
+  $$('#cus-cards .pcard').forEach(c=>{
+    const tg=()=>{const id=c.dataset.id,s=S.custom.sel;const i=s.indexOf(id);if(i>=0)s.splice(i,1);else s.push(id);save();
+      const on=s.includes(id);c.classList.toggle('sel',on);c.setAttribute('aria-checked',on);c.querySelector('.chk').textContent=on?'✓':'';$('#cus-err').textContent=''};
+    c.onclick=tg;c.onkeydown=e=>{if(e.key===' '||e.key==='Enter'){e.preventDefault();tg()}};
+  });
+}
+$('#b-cgo').onclick=()=>{
+  const pool=ORDER.filter(id=>S.custom.sel.includes(id));
+  if(!pool.some(id=>P[id].ev.some(e=>!e.rest))){$('#cus-err').textContent='請至少選一個有音符的節奏型（不能只選休止符）。';return}
+  const weights={};pool.forEach(p=>weights[p]=p==='qr'?.6:1);
+  launch({mode:'custom',sight:S.mode==='sight',map:MAPS[0],title:'自選節奏練習',animal:'owl',item:'⭐',pool,weights,required:[],bpm:+$('#c-bpm').value,nRounds:S.custom.rounds,teams:S.players,sc:['#d6eeff','#f3faff','#a6de76','#80c95a']});
+};
+
+/* ================= runner: side-scrolling map ================= */
+const MAPS={
+  0:{name:'音符樂園',sky:['#cfeaff','#f3faff'],far:'#bde3a0',ground:'#8ccf5e',dirt:'#c98f5a',obs:'noteblock',deco:'note'},
+  1:{name:'農場小路',sky:['#bfe9ff','#effaff'],far:'#b6e39a',ground:'#8ccf5e',dirt:'#c98f5a',obs:'hay',deco:'barn'},
+  2:{name:'蘿蔔田',sky:['#ffd9e8','#fff5f9'],far:'#c7e8a8',ground:'#7fc95a',dirt:'#a8714a',obs:'carrot',deco:'cabbage'},
+  3:{name:'荷花木棧道',sky:['#bff0e8','#f0fffc'],far:'#8fd9c6',ground:'#d39d64',dirt:'#5fb4d9',obs:'rock',deco:'reed',water:1},
+  4:{name:'麵包街',sky:['#ffe4bf','#fff7ea'],far:'#f0c48f',ground:'#e9b27a',dirt:'#b77a45',obs:'bread',deco:'house'},
+  5:{name:'大樹森林',sky:['#ffdcbc','#fff3e6'],far:'#6fae5c',ground:'#6aa955',dirt:'#7a5233',obs:'log',deco:'tree'},
+  6:{name:'蘑菇花園',sky:['#f1e0ff','#fcf7ff'],far:'#bfe39a',ground:'#9bd16f',dirt:'#a8714a',obs:'mushroom',deco:'flower'},
+  7:{name:'星空鐘塔',sky:['#3f3d86','#8e86d6'],far:'#34326f',ground:'#8b84d8',dirt:'#4b4590',obs:'brick',deco:'tower',night:1},
+  8:{name:'水晶城堡',sky:['#ffd2cf','#fff0e6'],far:'#f3b3a8',ground:'#5fc1aa',dirt:'#3f8f7c',obs:'crystal',deco:'castle'}
+};
+const HEROES=['cat','dog','penguin','panda','fox','chick','rabbit','frog','bear','squirrel','hedgehog','owl','dragon'];
+const HNAME={cat:'小貓咪',dog:'小狗狗',penguin:'小企鵝',panda:'小熊貓',fox:'小狐狸',chick:'小雞',rabbit:'小兔子',frog:'小青蛙',bear:'小熊',squirrel:'小松鼠',hedgehog:'小刺蝟',owl:'貓頭鷹',dragon:'小龍龍'};
+const HPRICE={cat:0,dog:0,penguin:0,panda:0,fox:30,chick:40,rabbit:40,frog:50,bear:50,squirrel:60,hedgehog:60,owl:80,dragon:120};
+const HATS={flower:{n:'小花',price:20},bow:{n:'蝴蝶結',price:25},party:{n:'派對帽',price:30},phones:{n:'耳機',price:45},crown:{n:'皇冠',price:60},wizard:{n:'魔法帽',price:80}};
+function hatSVG(id){
+  const k='#3b2a52',sw=`stroke="${k}" stroke-width="3" stroke-linejoin="round"`;let g='';
+  switch(id){
+    case 'flower':for(let i=0;i<5;i++){const a=i*Math.PI*2/5;g+=`<circle cx="${(84+Math.cos(a)*7).toFixed(1)}" cy="${(30+Math.sin(a)*7).toFixed(1)}" r="6" fill="#ff9fc4" ${sw}/>`}g+=`<circle cx="84" cy="30" r="4.5" fill="#ffd23f" ${sw}/>`;break;
+    case 'bow':g=`<path d="M74 31 L60 21 L60 41 Z" fill="#ff7aa8" ${sw}/><path d="M74 31 L88 21 L88 41 Z" fill="#ff7aa8" ${sw}/><circle cx="74" cy="31" r="5" fill="#ff4d8d" ${sw}/>`;break;
+    case 'party':g=`<path d="M47 37 L73 37 L61 4 Z" fill="#7cd3ff" ${sw}/><path d="M52 27 L69 27 M56 16 L66 16" stroke="#ff8e72" stroke-width="4"/><circle cx="61" cy="5" r="5.5" fill="#ffd23f" ${sw}/>`;break;
+    case 'phones':g=`<path d="M24 64 C20 18 100 18 96 64" fill="none" stroke="${k}" stroke-width="9" stroke-linecap="round"/><path d="M24 64 C20 18 100 18 96 64" fill="none" stroke="#ff7a59" stroke-width="4" stroke-linecap="round"/><rect x="12" y="54" width="16" height="26" rx="7" fill="#ff7a59" ${sw}/><rect x="92" y="54" width="16" height="26" rx="7" fill="#ff7a59" ${sw}/>`;break;
+    case 'crown':g=`<path d="M40 38 L40 15 L50 26 L60 9 L70 26 L80 15 L80 38 Z" fill="#ffd23f" ${sw}/><circle cx="60" cy="30" r="4" fill="#ff5a6e" ${sw}/><circle cx="47" cy="32" r="2.5" fill="#3fa9f5"/><circle cx="73" cy="32" r="2.5" fill="#3fa9f5"/>`;break;
+    case 'wizard':g=`<path d="M38 35 L82 35 L66 2 Z" fill="#7b5cd6" ${sw}/><ellipse cx="60" cy="36" rx="30" ry="6" fill="#7b5cd6" ${sw}/><path d="M63 13 l2 5 5 .5 -4 3 1.5 5 -4.5 -3 -4.5 3 1.5 -5 -4 -3 5 -.5 z" fill="#ffd23f"/>`;break;
+  }
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" aria-hidden="true">${g}</svg>`;
+}
+function owned(h){return HPRICE[h]===0||(S.ownH||[]).includes(h)}
+function heroPic(h){const hat=S.hatOf&&S.hatOf[h];return `<span class="hp">${animalSVG(h)}${hat?hatSVG(hat):''}</span>`}
+const IMG={};
+function sprite(key){if(!IMG[key]){const i=new Image();const svg=key.startsWith('hat:')?hatSVG(key.slice(4)):animalSVG(key);i.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg);IMG[key]=i}return IMG[key]}
+HEROES.forEach(sprite);Object.keys(HATS).forEach(h=>sprite('hat:'+h));
+const RUN={cv:null,cx:null,W:0,H:0,dpr:1};
+function runInit(){
+  RUN.cv=$('#rc');RUN.cx=RUN.cv.getContext('2d');
+  const fit=()=>{const r=RUN.cv.getBoundingClientRect();RUN.dpr=RUN.low?1:Math.min(1.5,window.devicePixelRatio||1);RUN.W=r.width;RUN.H=r.height;
+    RUN.cv.width=Math.max(1,Math.round(r.width*RUN.dpr));RUN.cv.height=Math.max(1,Math.round(r.height*RUN.dpr))};
+  RUN.fit=fit;fit();if(window.ResizeObserver)new ResizeObserver(fit).observe(RUN.cv);else window.addEventListener('resize',fit);
+}
+const INK='#3b2a52';
+function rr(c,x,y,w,h,r){r=Math.max(0,Math.min(r,w/2,h/2));c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+function fs(c,fill,lw){c.fillStyle=fill;c.fill();c.lineWidth=lw;c.strokeStyle=INK;c.lineJoin='round';c.stroke()}
+function circ(c,x,y,r){c.beginPath();c.arc(x,y,Math.max(.1,r),0,Math.PI*2)}
+function hash(i){const x=Math.sin(i*127.1)*43758.5453;return x-Math.floor(x)}
+
+function drawObs(c,type,x,gy,w,h,lw){
+  const L=x-w/2,T=gy-h;
+  switch(type){
+    case 'hay':rr(c,L,T,w,h,w*.25);fs(c,'#f5cd55',lw);c.beginPath();for(let i=1;i<3;i++){c.moveTo(L+w*i/3,T+h*.15);c.lineTo(L+w*i/3,gy-h*.15)}c.strokeStyle='#c99a2e';c.lineWidth=lw*.8;c.stroke();break;
+    case 'carrot':c.beginPath();c.ellipse(x-w*.18,T+h*.14,w*.13,h*.2,-.4,0,7);fs(c,'#5fbf4a',lw);c.beginPath();c.ellipse(x+w*.18,T+h*.14,w*.13,h*.2,.4,0,7);fs(c,'#5fbf4a',lw);
+      c.beginPath();c.moveTo(L,T+h*.3);c.lineTo(L+w,T+h*.3);c.lineTo(x,gy+h*.12);c.closePath();fs(c,'#ff9a3c',lw);break;
+    case 'rock':c.beginPath();c.moveTo(L,gy);c.quadraticCurveTo(L-w*.05,T+h*.25,x-w*.1,T);c.quadraticCurveTo(L+w*1.1,T,L+w,gy);c.closePath();fs(c,'#b4afc6',lw);
+      circ(c,x-w*.15,T+h*.35,w*.07);c.fillStyle='#fff';c.fill();break;
+    case 'bread':rr(c,L,T+h*.15,w,h*.85,h*.4);fs(c,'#e0a35c',lw);c.beginPath();for(let i=0;i<3;i++){const sx=L+w*(.25+i*.25);c.moveTo(sx-w*.06,T+h*.35);c.lineTo(sx+w*.06,T+h*.2)}c.strokeStyle='#fff3d9';c.lineWidth=lw;c.stroke();break;
+    case 'log':rr(c,L,T+h*.1,w,h*.9,h*.25);fs(c,'#a8714a',lw);c.beginPath();c.ellipse(x,T+h*.55,w*.25,h*.25,0,0,7);fs(c,'#e7b98a',lw*.8);break;
+    case 'mushroom':rr(c,x-w*.2,T+h*.45,w*.4,h*.55,w*.1);fs(c,'#fff3e0',lw);c.beginPath();c.ellipse(x,T+h*.5,w*.6,h*.5,0,Math.PI,0);c.closePath();fs(c,'#ff6b6b',lw);
+      c.fillStyle='#fff';circ(c,x-w*.22,T+h*.28,w*.08);c.fill();circ(c,x+w*.18,T+h*.2,w*.1);c.fill();break;
+    case 'brick':rr(c,L,T,w,h,3);fs(c,'#e07a4a',lw);c.beginPath();c.moveTo(L,T+h/2);c.lineTo(L+w,T+h/2);c.moveTo(x,T);c.lineTo(x,T+h/2);c.moveTo(L+w*.25,T+h/2);c.lineTo(L+w*.25,gy);c.moveTo(L+w*.75,T+h/2);c.lineTo(L+w*.75,gy);c.strokeStyle=INK;c.lineWidth=lw*.6;c.stroke();break;
+    case 'crystal':c.beginPath();c.moveTo(x,T-h*.1);c.lineTo(L+w,T+h*.45);c.lineTo(x,gy);c.lineTo(L,T+h*.45);c.closePath();fs(c,'#86e3f2',lw);c.beginPath();c.moveTo(x,T);c.lineTo(x,gy-2);c.strokeStyle='#fff';c.lineWidth=lw*.8;c.stroke();break;
+    case 'gold':rr(c,L,T,w,h,5);fs(c,'#ffd23f',lw);c.fillStyle='#fff';c.globalAlpha=.6;c.fillRect(L+w*.15,T+h*.12,w*.15,h*.5);c.globalAlpha=1;c.fillStyle='#e08a00';c.font=`700 ${h*.6}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('★',x,T+h*.55);break;
+    default:rr(c,L,T,w,h,4);fs(c,'#ffd23f',lw);c.fillStyle=INK;c.font=`700 ${h*.7}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('♪',x,T+h*.55);
+  }
+}
+function drawDeco(c,type,x,gy,s,lw){
+  switch(type){
+    case 'barn':rr(c,x-s*.25,gy-s*.32,s*.5,s*.32,4);fs(c,'#e5675a',lw);c.beginPath();c.moveTo(x-s*.32,gy-s*.3);c.lineTo(x,gy-s*.52);c.lineTo(x+s*.32,gy-s*.3);c.closePath();fs(c,'#b8463d',lw);
+      rr(c,x-s*.08,gy-s*.18,s*.16,s*.18,2);fs(c,'#fff',lw*.8);break;
+    case 'cabbage':[[-.12,.1],[.12,.1],[0,.16]].forEach(([dx,dy])=>{circ(c,x+dx*s,gy-dy*s,s*.13);fs(c,'#8fd16a',lw)});break;
+    case 'reed':for(let i=-1;i<=1;i++){c.beginPath();c.moveTo(x+i*s*.08,gy);c.lineTo(x+i*s*.1,gy-s*(.45+i*.05));c.strokeStyle='#3f9d3a';c.lineWidth=lw;c.stroke();c.beginPath();c.ellipse(x+i*s*.1,gy-s*(.45+i*.05),s*.025,s*.07,0,0,7);fs(c,'#8a5a3b',lw*.6)}
+      c.beginPath();c.ellipse(x+s*.3,gy-s*.02,s*.16,s*.05,0,0,7);fs(c,'#86d673',lw*.8);circ(c,x+s*.3,gy-s*.07,s*.05);fs(c,'#ffb3c8',lw*.6);break;
+    case 'house':rr(c,x-s*.2,gy-s*.36,s*.4,s*.36,3);fs(c,'#fff1d6',lw);c.beginPath();c.moveTo(x-s*.26,gy-s*.34);c.lineTo(x,gy-s*.56);c.lineTo(x+s*.26,gy-s*.34);c.closePath();fs(c,'#e57a5a',lw);
+      rr(c,x-s*.07,gy-s*.27,s*.14,s*.1,2);fs(c,'#8fd0ff',lw*.7);break;
+    case 'tree':rr(c,x-s*.04,gy-s*.3,s*.08,s*.3,2);fs(c,'#8a5a3b',lw);[[0,.52,.2],[-.13,.4,.15],[.13,.4,.15]].forEach(([dx,dy,r])=>{circ(c,x+dx*s,gy-dy*s,r*s);fs(c,'#4f9a44',lw)});break;
+    case 'flower':c.beginPath();c.moveTo(x,gy);c.lineTo(x,gy-s*.36);c.strokeStyle='#3f9d3a';c.lineWidth=lw;c.stroke();for(let a=0;a<5;a++){const an=a*Math.PI*2/5;circ(c,x+Math.cos(an)*s*.07,gy-s*.4+Math.sin(an)*s*.07,s*.055);fs(c,'#ff9fc4',lw*.6)}circ(c,x,gy-s*.4,s*.045);fs(c,'#ffd23f',lw*.6);break;
+    case 'tower':rr(c,x-s*.13,gy-s*.8,s*.26,s*.8,3);fs(c,'#5c55a8',lw);c.beginPath();c.moveTo(x-s*.18,gy-s*.78);c.lineTo(x,gy-s*.98);c.lineTo(x+s*.18,gy-s*.78);c.closePath();fs(c,'#ff8e72',lw);
+      circ(c,x,gy-s*.6,s*.08);fs(c,'#fff8d6',lw*.7);c.beginPath();c.moveTo(x,gy-s*.6);c.lineTo(x,gy-s*.66);c.moveTo(x,gy-s*.6);c.lineTo(x+s*.04,gy-s*.6);c.strokeStyle=INK;c.lineWidth=lw*.6;c.stroke();
+      rr(c,x-s*.04,gy-s*.3,s*.08,s*.1,2);fs(c,'#ffd23f',lw*.6);break;
+    case 'castle':rr(c,x-s*.24,gy-s*.4,s*.48,s*.4,2);fs(c,'#f6e0ff',lw);for(let i=0;i<3;i++){rr(c,x-s*.24+i*s*.18,gy-s*.48,s*.12,s*.1,1);fs(c,'#f6e0ff',lw)}
+      c.beginPath();c.arc(x,gy-s*.1,s*.08,Math.PI,0);c.lineTo(x+s*.08,gy);c.lineTo(x-s*.08,gy);c.closePath();fs(c,'#a46ee8',lw*.8);break;
+    default:c.fillStyle='rgba(164,110,232,.35)';c.font=`700 ${s*.5}px sans-serif`;c.textAlign='center';c.textBaseline='alphabetic';c.fillText(hash(x)>.5?'♪':'♫',x,gy);
+  }
+}
+function heroLift(L,now){const j=G.jumps[L];const u=(now-j.t0)/G.jdur;if(u<0||u>=1)return 0;return j.b*(1-u)+4*u*(1-u)}
+function runDraw(now,pos){
+  const {cx:c,W,H,dpr}=RUN;if(!c||W<20||H<20)return;
+  c.setTransform(dpr,0,0,dpr,0,0);
+  const M=G.map,n=G.teams,goal=G.totalBeats+1,cam=Math.min(pos,goal-.25);
+  const PXB=Math.max(70,W/4.6),HX=W*.27,off=(G.jdur/2)/G.spb,lw=Math.max(1.5,H/n/90);
+  const sx=b=>HX+(b-cam)*PXB;
+  // sky
+  const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,M.sky[0]);g.addColorStop(1,M.sky[1]);c.fillStyle=g;c.fillRect(0,0,W,H);
+  if(M.night){c.fillStyle='#fff';for(let i=0;i<40;i++){const x=((hash(i)*W*1.5-cam*PXB*.05)%W+W)%W,y=hash(i+99)*H*.7;circ(c,x,y,hash(i+7)*1.6+.6);c.globalAlpha=.5+.5*Math.sin(now*3+i);c.fill()}c.globalAlpha=1;circ(c,W*.58,H*.2,H*.08);fs(c,'#fff6c2',lw)}
+  else{circ(c,W*.58,H*.2,H*.08);fs(c,'#ffe066',lw);c.fillStyle='rgba(255,255,255,.9)';for(let i=0;i<3;i++){const x=(((i*W*.45)-cam*PXB*.12)%(W+240)+W+240)%(W+240)-120,y=H*(.12+i*.1);c.beginPath();c.ellipse(x,y,H*.12,H*.045,0,0,7);c.ellipse(x+H*.07,y-H*.035,H*.06,H*.05,0,0,7);c.fill()}}
+  // far hills + deco (parallax)
+  const fy=H*.86,s=Math.min(H*.55,W*.3);
+  c.beginPath();c.moveTo(0,H);for(let x=0;x<=W+20;x+=20){c.lineTo(x,fy-H*.12-Math.sin((x+cam*PXB*.25)*.006)*H*.07)}c.lineTo(W,H);c.closePath();c.fillStyle=M.far;c.fill();
+  const D=s*1.05,o2=cam*PXB*.4;for(let i=Math.floor(o2/D)-1;i<Math.floor((o2+W)/D)+2;i++){if(hash(i)<.3)continue;const x=i*D-o2+D*hash(i+3)*.4;drawDeco(c,M.deco,x,fy-H*.1-Math.sin((x+cam*PXB*.25)*.006)*H*.07+s*.04,s*(.75+hash(i+5)*.3),lw)}
+  // lanes
+  const laneH=H/n,done=pos>=goal-.25;
+  for(let L=0;L<n;L++){
+    const top=L*laneH,gy=top+laneH*.82,u=laneH;
+    // ground
+    c.fillStyle=M.dirt;c.fillRect(0,gy,W,top+laneH-gy);c.fillStyle=M.ground;c.fillRect(0,gy,W,u*.06);
+    c.beginPath();c.moveTo(0,gy);c.lineTo(W,gy);c.strokeStyle=INK;c.lineWidth=lw;c.stroke();
+    c.beginPath();for(let b=Math.floor((cam-2)*2);b<(cam+5)*2;b++){const x=sx(b/2);c.moveTo(x,gy+u*.06);c.lineTo(x,top+laneH)}c.strokeStyle='rgba(59,42,82,.18)';c.lineWidth=lw;c.stroke();
+    if(M.water){c.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<6;i++){const x=((i*W/6-cam*PXB*.6)%W+W)%W;c.fillRect(x,gy+u*.1+((i%2)*u*.04),u*.12,lw)}}
+    // signs: start + "換你" markers
+    const sign=(b,txt,col)=>{const x=sx(b)-PXB*.12;if(x<-60||x>W+60)return;c.beginPath();c.moveTo(x,gy);c.lineTo(x,gy-u*.28);c.strokeStyle=INK;c.lineWidth=lw*1.4;c.stroke();
+      c.font=`700 ${Math.max(10,u*.09)}px ${CFONT()}`;const tw=c.measureText(txt).width+u*.08;rr(c,x-tw/2,gy-u*.4,tw,u*.13,u*.03);fs(c,col,lw);c.fillStyle=INK;c.textAlign='center';c.textBaseline='middle';c.fillText(txt,x,gy-u*.335)};
+    sign(0,'出發','#ffd23f');
+    for(let r=0;r<G.nRounds;r++){sign((r+1)*G.rb*4,'換你','#a6e386');if(G.rb===3)sign((2+r*3)*4,'預備','#ffd23f')}
+    // demo notes floating
+    if(!G.sight)for(let r=0;r<G.nRounds;r++){const b0=(1+r*G.rb)*4;if(sx(b0)>W+50||sx(b0+4)<-50)continue;
+      G.rounds[r].ons.forEach(o=>{const x=sx(b0+o.t);const lit=pos>=b0+o.t;circ(c,x,gy-u*.74,u*.07);fs(c,lit?'#ff8e72':'#fff',lw);c.fillStyle=lit?'#fff':INK;c.font=`700 ${u*.09}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('♪',x,gy-u*.735)})}
+    // obstacles
+    G.exp.forEach((x,k)=>{if(x.own>=0&&x.own!==L)return;const X=sx(x.b+off);if(X<-60||X>W+60)return;const st=G.judged[L][k];
+      const h=u*.17*(x.d>=2?1.25:x.d>=1?1.08:.9),w=Math.min(PXB*.19,u*.22);
+      const ot=G.gold[L].has(x.r)?'gold':M.obs;
+      if(st==='m'){c.save();c.translate(X,gy);c.rotate(.35);c.translate(-X,-gy);drawObs(c,ot,X,gy,w,h,lw);c.restore()}else drawObs(c,ot,X,gy,w,h,lw)});
+    // goal
+    const gx=sx(goal);if(gx<W+100){
+      const ck=gx+PXB*.9;drawDeco(c,'castle',ck,gy,u*.9,lw);
+      c.beginPath();c.moveTo(gx,gy);c.lineTo(gx,gy-u*.68);c.strokeStyle=INK;c.lineWidth=lw*1.6;c.stroke();circ(c,gx,gy-u*.7,u*.03);fs(c,'#ffd23f',lw*.6);
+      const rise=G.goalAt?Math.min(1,(now-G.goalAt)/.6):0,fyy=gy-u*.12-rise*u*.5;
+      c.beginPath();c.moveTo(gx,fyy-u*.08);c.lineTo(gx+u*.18,fyy-u*.04);c.lineTo(gx,fyy);c.closePath();fs(c,n>1?TEAMHEX[L]:'#ff8e72',lw)}
+    // fx: items popping out of cleared obstacles
+    G.fx.forEach(f=>{if(f.L!==L)return;const a=(now-f.t0)/.8;if(a>1)return;const X=sx(G.exp[f.k].b+off);c.globalAlpha=1-a;c.font=`${u*.16}px sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText(f.txt,X,gy-u*.25-a*u*.4);c.globalAlpha=1});
+    // hero
+    const hs=u*(n>1?.5:.34),JH=u*(n>1?.32:.27),lift=done?Math.abs(Math.sin((now-G.goalAt)*7))*.55:heroLift(L,now),hy=gy-hs*.94-lift*JH;
+    c.fillStyle='rgba(59,42,82,.18)';c.beginPath();c.ellipse(HX,gy+lw,hs*.35*(1-lift*.4),hs*.07,0,0,7);c.fill();
+    const run=!done&&lift===0,ph=now*14;
+    if(run){c.fillStyle=INK;c.beginPath();c.ellipse(HX-hs*.15+Math.sin(ph)*hs*.08,gy-hs*.04,hs*.09,hs*.05,0,0,7);c.ellipse(HX+hs*.15-Math.sin(ph)*hs*.08,gy-hs*.04,hs*.09,hs*.05,0,0,7);c.fill()}
+    const bonk=now-G.bonk[L]<.4,img=sprite(G.heroes[L]);
+    c.save();c.translate(HX,hy+hs/2);c.rotate(bonk?Math.sin(now*40)*.15:lift>0?-.12:Math.sin(ph)*.04);
+    if(bonk)c.globalAlpha=.55+.45*Math.abs(Math.sin(now*30));
+    const by=-hs/2+(run?Math.abs(Math.sin(ph))*-hs*.04:0);
+    if(img.complete&&img.naturalWidth)c.drawImage(img,-hs/2,by,hs,hs);
+    const hat=S.hatOf[G.heroes[L]];if(hat){const hi=sprite('hat:'+hat);if(hi.complete&&hi.naturalWidth)c.drawImage(hi,-hs/2,by,hs,hs)}
+    c.restore();c.globalAlpha=1;
+    if(bonk){c.fillStyle='#ffd23f';c.font=`700 ${u*.1}px sans-serif`;c.textAlign='center';c.fillText('✦ ✦',HX,hy-u*.02)}
+    if(n>1){c.font=`700 ${Math.max(11,u*.11)}px ${CFONT()}`;c.textAlign='left';c.textBaseline='middle';const t=TEAM[L].n,tw=c.measureText(t).width+u*.12;
+      rr(c,8,gy+u*.03,tw,u*.13,u*.05);fs(c,TEAMHEX[L],lw*.8);c.fillStyle='#fff';c.fillText(t,8+u*.06,gy+u*.095)}
+    // banners (perfect round, golden round)
+    G.banners.forEach(bn=>{if(bn.L!==L)return;const a=(now-bn.t0)/1.6;if(a<0||a>1)return;const sz=Math.max(12,Math.min(u*.16,W*.045))*(a<.15?a/.15:1);
+      c.globalAlpha=a>.8?(1-a)/.2:1;c.font=`900 ${sz}px Huninn,"Chiron GoRound TC",sans-serif`;c.textAlign='center';c.textBaseline='middle';c.lineWidth=sz*.18;c.strokeStyle=INK;c.lineJoin='round';
+      const y=top+u*.32-a*u*.08;c.strokeText(bn.txt,W*.56,y);c.fillStyle=bn.c||'#ffd23f';c.fillText(bn.txt,W*.56,y);c.globalAlpha=1});
+    if(G.turn&&G.act>=0&&L!==G.act&&!G.goalAt){c.fillStyle='rgba(255,255,255,.45)';c.fillRect(0,top,W,laneH)}
+    if(n>1&&L<n-1){c.fillStyle=INK;c.fillRect(0,top+laneH-lw,W,lw*2)}
+  }
+  // finish banner + confetti
+  if(G.goalAt){
+    const t=now-G.goalAt,cols=['#ff7a59','#3fa9f5','#45b83c','#a46ee8','#ffd23f'];
+    for(let i=0;i<60;i++){const x=hash(i)*W,y=((t*H*.45+hash(i+50)*H*1.2)%(H*1.2))-H*.1;c.fillStyle=cols[i%5];c.save();c.translate(x,y);c.rotate(t*4+i);c.fillRect(-4,-2,8,4);c.restore()}
+    const sz=Math.min(W*.09,H*.16)*Math.min(1,t*3);
+    if(sz>2){c.font=`900 ${sz}px Huninn,"Chiron GoRound TC",sans-serif`;c.textAlign='center';c.textBaseline='middle';c.lineWidth=sz*.14;c.strokeStyle=INK;c.lineJoin='round';
+      c.strokeText('闖關完成！',W/2,H*.42);c.fillStyle='#ffd23f';c.fillText('闖關完成！',W/2,H*.42)}
+  }
+}
+let _cf='';function CFONT(){return _cf||(_cf=getComputedStyle(document.body).fontFamily)}
+const TEAMHEX=['#ff7a59','#3fa9f5','#45b83c','#a46ee8','#ff9f1c','#f15bb5','#00b8a9','#9c6644'];
+
+/* ================= microphone clap detection ================= */
+const MIC={on:false,err:'',ref:.085,lastPk:0,lastFl:0,floor:.004,tfloor:.003,thist:[],kind:'',prev:0,last:0,level:0,ui:null,cal:null,hp:[]};
+function micThr(){const s=S.micSens||6;return {ratio:7.5-s*.5,abs:.006*(11-s)}}
+async function micStart(){
+  ensureAC();if(MIC.on)return true;
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.isSecureContext){MIC.err='這個頁面無法使用麥克風。請用 Netlify 網址（https 開頭）開啟遊戲。';return false}
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    MIC.stream=st;const src=AC.createMediaStreamSource(st);
+    const chain=(spec)=>{let node=src;spec.forEach(([type,f])=>{const b=AC.createBiquadFilter();b.type=type;b.frequency.value=f;b.Q.value=.7;node.connect(b);node=b});return node};
+    const clapN=chain([['highpass',2600],['highpass',2600],['highpass',2600],['highpass',2600]]);          // claps: bright noise
+    const fluteN=chain([['highpass',450],['highpass',450],['highpass',450],['highpass',450],['lowpass',2500],['lowpass',2500]]); // recorder: C5–D6 band
+    const mg=AC.createChannelMerger(2);clapN.connect(mg,0,0);fluteN.connect(mg,0,1);
+    const pr=AC.createScriptProcessor(512,2,1),mute=AC.createGain();mute.gain.value=0;
+    mg.connect(pr);pr.connect(mute);mute.connect(AC.destination);
+    pr.onaudioprocess=micProcess;MIC.src=src;MIC.pr=pr;MIC.mute=mute;MIC.on=true;MIC.err='';
+    requestAnimationFrame(micMeter);return true;
+  }catch(e){
+    MIC.err=(e&&e.name==='NotAllowedError')?'麥克風被拒絕了。請在瀏覽器網址列旁的權限設定允許麥克風，再試一次。':'這個頁面目前無法使用麥克風。請用 Netlify 網址（https 開頭）開啟遊戲。';
+    return false;
+  }
+}
+function micStop(){if(!MIC.on)return;try{MIC.stream.getTracks().forEach(t=>t.stop());MIC.pr.disconnect();MIC.src.disconnect();MIC.mute.disconnect()}catch(e){}MIC.on=false}
+function micProcess(e){
+  const sr=AC.sampleRate,d=e.inputBuffer.getChannelData(0),n=d.length,now=AC.currentTime,{ratio,abs}=micThr();
+  // 1) clap: sharp bright transient
+  let pk=0,pi=0;for(let i=0;i<n;i++){const a=d[i]<0?-d[i]:d[i];if(a>pk){pk=a;pi=i}}
+  const t=now-(n-pi)/sr,thr=Math.max(MIC.floor*ratio,abs);
+  let hit=false;
+  const echo=t-MIC.last<.3&&pk<MIC.lastPk*.55;
+  if(pk>thr&&pk>MIC.prev*1.6&&t-MIC.last>MIC.ref&&!echo){MIC.last=t;MIC.lastPk=pk;MIC.kind='clap';onClap(t);hit=true}
+  else if(pk<thr)MIC.floor=MIC.floor*.96+pk*.04;
+  MIC.prev=pk;
+  // 2) recorder: any pitch, a new tongued note = energy rising from a dip
+  const f=e.inputBuffer.numberOfChannels>1?e.inputBuffer.getChannelData(1):null;let lv=pk/thr;
+  if(f){
+    let sum=0;for(let i=0;i<n;i++)sum+=f[i]*f[i];const rms=Math.sqrt(sum/n);
+    const tthr=Math.max(MIC.tfloor*(ratio-1),abs*.6),hist=MIC.thist,minR=hist.length?Math.min(...hist):0;
+    const fecho=now-MIC.last<.3&&rms<MIC.lastFl*.55;
+    if(!hit&&!fecho&&rms>tthr&&rms>minR*2.2&&now-n/(2*sr)-MIC.last>Math.max(.09,MIC.ref)){MIC.lastFl=rms;
+      let fi=0;const a0=tthr*1.2;for(let i=0;i<n;i++){if((f[i]<0?-f[i]:f[i])>a0){fi=i;break}}
+      const tt=now-(n-fi)/sr;MIC.last=tt;MIC.kind='flute';onClap(tt);
+    }
+    if(rms<tthr)MIC.tfloor=MIC.tfloor*.96+rms*.04;
+    hist.push(rms);if(hist.length>4)hist.shift();
+    lv=Math.max(lv,rms/tthr);
+  }
+  if(hit&&f){let q=0;for(let i=0;i<n;i++)q+=f[i]*f[i];MIC.lastFl=Math.sqrt(q/n)}
+  MIC.level=Math.max(lv,MIC.level*.8);MIC.thr=1;
+}
+function micMeter(){
+  if(!MIC.on)return;
+  if(MIC.ui&&MIC.ui.lvl&&document.body.contains(MIC.ui.lvl)){const sc=v=>Math.min(100,v*40);MIC.ui.lvl.style.width=sc(MIC.level)+'%';MIC.ui.thr.style.left='40%'}
+  const ml=$('#miclive');if(ml)ml.classList.toggle('on',AC.currentTime-MIC.last<.12);
+  requestAnimationFrame(micMeter);
+}
+function onClap(t){
+  if(MIC.ui&&MIC.ui.clap&&document.body.contains(MIC.ui.clap)){const c=MIC.ui.clap;c.textContent=MIC.kind==='flute'?'🎵':'👏';c.classList.add('on');setTimeout(()=>c.classList.remove('on'),120)}
+  if(MIC.cal){MIC.cal.taps.push(t);return}
+  if(G&&G.running&&!G.paused&&G.input==='mic')tap(G.turn?activeTeam():0,t);
+}
+function micCalibrate(msgEl){
+  micStart().then(ok=>{
+    if(!ok){msgEl.textContent=MIC.err;return}
+    const t0=AC.currentTime+1,spb=.6,clicks=[];for(let i=0;i<8;i++){clicks.push(t0+i*spb);click(t0+i*spb,i%4===0,master,true)}
+    MIC.cal={taps:[]};msgEl.textContent='跟著節拍器拍手（或吹直笛）8 下…';
+    setTimeout(()=>{
+      const taps=MIC.cal.taps;MIC.cal=null;
+      const ds=taps.map(t=>{let m=1e9;clicks.forEach(c=>{if(Math.abs(t-c)<Math.abs(m))m=t-c});return m}).filter(x=>Math.abs(x)<.35).sort((a,b)=>a-b);
+      if(ds.length<4){msgEl.textContent=`只偵測到 ${ds.length} 下，請把靈敏度調高或大聲一點再試。`;return}
+      S.micLat=ds[Math.floor(ds.length/2)];save();msgEl.textContent=`校正完成（${Math.round(S.micLat*1000)} ms）`;
+    },(1+8*.6+.6)*1000);
+  });
+}
+async function launch(cfg){
+  if(S.input==='mic'){
+    const ok=await micStart();
+    if(!ok){toast(MIC.err);return}
+  }
+  startGame(cfg);
+}
+
+/* ================= game ================= */
+let G=null;
+function genBar(pool,weights,prevKey,need){
+  for(let tries=0;tries<60;tries++){
+    let rem=4,start=0;const items=[];
+    while(rem>0){
+      const c=pool.filter(id=>P[id].len<=rem);let id='q';
+      if(c.length){const tot=c.reduce((s,x)=>s+(weights[x]||1),0);let r=Math.random()*tot;id=c[c.length-1];for(const x of c){r-=(weights[x]||1);if(r<=0){id=x;break}}}
+      items.push({id,start});start+=P[id].len;rem-=P[id].len;
+    }
+    const ons=onsetsOf(items),key=items.map(i=>i.id).join(','),last=tries>=58;
+    if(!last){
+      if(ons.length<2&&pool.some(id=>P[id].len<4))continue;
+      if(key===prevKey)continue;
+      if(items.filter(i=>i.id==='qr').length>1)continue;
+      if(need&&!items.some(i=>i.id===need))continue;
+    }
+    return {items,ons,key};
+  }
+}
+function startGame(cfg){
+  ensureAC();stopGame();
+  ensureGroups(cfg.teams>1?cfg.teams:0);syncTeamNames();cfg.playAs=S.playAs;
+  cfg.input=S.input;cfg.turn=cfg.teams>1&&(S.turn||S.input==='mic');
+  cfg.baseRounds=cfg.baseRounds||cfg.nRounds;
+  if(cfg.turn)cfg.nRounds=cfg.mode==='level'?(cfg.teams<=4?3:2)*cfg.teams:Math.max(2,Math.ceil(cfg.baseRounds/cfg.teams))*cfg.teams;
+  else cfg.nRounds=cfg.baseRounds;
+  const spb=60/cfg.bpm,rounds=[];let prev='';
+  const req=cfg.required.filter(r=>cfg.pool.includes(r));
+  for(let r=0;r<cfg.nRounds;r++){
+    const ci=cfg.turn?Math.floor(r/cfg.teams):r;
+    const need=req.length&&(ci<req.length*2||Math.random()<.5)?req[ci%req.length]:null;
+    const b=genBar(cfg.pool,cfg.weights,prev,need);rounds.push(b);prev=b.key;
+  }
+  const rb=cfg.sight?2:3;
+  G=Object.assign({},cfg,{spb,rounds,rb,totalBeats:4*(1+rb*cfg.nRounds),running:true,paused:false});
+  G.out=AC.createGain();G.out.connect(master);
+  G.t0=AC.currentTime+1;G.nextBeat=0;G.lat=outLat()+S.offset/1000;
+  G.exp=[];rounds.forEach((R,r)=>R.ons.forEach((o,i)=>G.exp.push({T:G.t0+((r+1)*rb*4+o.t)*spb,r,i,b:(r+1)*rb*4+o.t,d:o.d,own:cfg.turn?r%cfg.teams:-1,w:4/Math.max(1,R.ons.length)})));
+  if(cfg.input==='mic')MIC.ref=Math.max(.085,Math.min(.14,.6*15/cfg.bpm));
+  G.lastOn=new Array(cfg.teams).fill(-9);
+  if(cfg.input==='mic')G.lat=S.micLat!=null?S.micLat:outLat()+.04;G.act=-1;
+  G.heroes=cfg.teams===1?[HEROES.includes(S.hero)?S.hero:'cat']:Array.from({length:cfg.teams},(_,i)=>HEROES.includes(S.teamHeroes[i])?S.teamHeroes[i]:HEROES[i%HEROES.length]);
+  G.heroes=G.heroes.map((h,i)=>owned(h)?h:DEFHERO[i%DEFHERO.length]);
+  G.en=G.heroes.map(()=>0);G.armed=G.heroes.map(()=>false);G.gold=G.heroes.map(()=>new Set());G.rx=G.heroes.map(()=>new Array(cfg.nRounds).fill(0));
+  G.chk=0;G.banners=[];G.goldUsed=false;
+  G.jdur=Math.min(.38,Math.max(.24,spb*.55));G.jumps=G.heroes.map(()=>({t0:-9,b:0}));G.bonk=G.heroes.map(()=>-9);G.fx=[];G.goalAt=0;
+  G.judged=Array.from({length:cfg.teams},()=>new Array(G.exp.length).fill(null));
+  G.stats=Array.from({length:cfg.teams},()=>({p:0,g:0,m:0,x:0,score:0,combo:0,max:0,items:0,coins:0,perfR:0}));
+  G.ptr=new Array(cfg.teams).fill(0);
+  G.lastBar=-99;G.lastBeat=-1;G.lit=0;G.shown=-1;G.fever=false;
+  buildPlayUI();
+  G.timer=setInterval(schedule,25);schedule();
+  try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>G&&(G.wl=l)).catch(()=>{})}catch(e){}
+  G.lastPN=0;requestAnimationFrame(frame);
+}
+function clearBig(){const el=$('#bigcount');if(el){el.classList.remove('flash');el.innerHTML=''}}
+function stopGame(){clearBig();$('#scr-play').classList.remove('paused');
+  if(!G)return;G.running=false;clearInterval(G.timer);
+  try{G.out.gain.setValueAtTime(0,AC.currentTime);const o=G.out;setTimeout(()=>{try{o.disconnect()}catch(e){}},200)}catch(e){}
+  try{G.wl&&G.wl.release()}catch(e){}
+  if(AC&&AC.state==='suspended')AC.resume();
+}
+function mine(t,k){const o=G.exp[k].own;return o<0||o===t}
+function activeTeam(){
+  if(!G.turn)return 0;
+  const pos=(AC.currentTime-G.lat-G.t0)/G.spb,ph=phaseOf(Math.floor(pos/4+.03));
+  const r=ph.r!=null?ph.r:ph.type==='end'?G.nRounds-1:0;return r%G.teams;
+}
+function setActive(o){
+  if(o===G.act)return;G.act=o;const t=TEAM[o],d=$('#drums .drum');
+  if(d){d.style.setProperty('--dc',t.c);d.firstChild.textContent=`輪到${t.n}`;d.dataset.team=o;
+    const cb=d.querySelector('.combo'),en=d.querySelector('.en');if(cb)cb.id='cb-'+o;if(en){en.id='en-'+o;updEnergy(o)}}
+  $$('#hud-score .sc').forEach((c,i)=>c.classList.toggle('act',i===o));
+}
+let bigT=0;
+function bigFlash(txt,label,go){
+  const el=$('#bigcount');if(!el)return;
+  el.innerHTML=`${label?`<span class="bl">${label}</span>`:''}<span class="bn">${txt}</span>`;
+  el.classList.toggle('go',!!go);el.style.setProperty('--bd',Math.max(.35,G.spb*.85)+'s');
+  el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash');
+}
+function phaseOf(bar){
+  if(bar<0)return {type:'pre'};if(bar===0)return {type:'count'};
+  if(bar>=G.totalBeats/4)return {type:'end'};
+  const r=Math.floor((bar-1)/G.rb),o=(bar-1)%G.rb;
+  return {type:o===0?'demo':o===G.rb-1?'resp':'ready',r};
+}
+function schedule(){
+  if(!G||!G.running)return;
+  const ahead=AC.currentTime+.2;
+  while(G.nextBeat<G.totalBeats){
+    const t=G.t0+G.nextBeat*G.spb;if(t>ahead)break;
+    const b=G.nextBeat,bar=Math.floor(b/4),ib=b%4,ph=phaseOf(bar);
+    click(t,ib===0,G.out,ph.type==='count'||ph.type==='ready'||(G.sight&&ph.type==='demo'));
+    if(ph.type==='demo'&&!G.sight){
+      const f=AN[G.animal].f;
+      G.rounds[ph.r].ons.forEach(o=>{if(Math.floor(o.t+1e-6)===ib)tone(t+(o.t-ib)*G.spb,o.d*G.spb,f,G.out)});
+    }
+    G.nextBeat++;
+  }
+}
+function buildPlayUI(){
+  setScene(G.sc);
+  $('#hud-lv').textContent=G.title+(G.sight?'・無示範':'・有示範');
+  $('#ani').innerHTML=animalSVG(G.animal);
+  const solo=G.teams===1;
+  $('#hud-score').innerHTML=solo
+    ?`<span class="sc" id="sc-items">🪙 <b>0</b></span><span class="sc" id="sc-0">分數 <b>0</b></span><span id="fever"></span>`
+    :TEAM.slice(0,G.teams).map((t,i)=>`<span class="sc" id="sc-${i}"><i class="dot" style="background:${t.c}"></i>${t.n} <b>0</b></span>`).join('');
+  $('#drums').classList.toggle('teams',!solo&&!G.turn);$('#drums').classList.toggle('many',!solo&&!G.turn&&G.teams>4);$('#stage').classList.toggle('many',!solo&&!G.turn&&G.teams>4);
+  const live=G.input==='mic'?`<span class="miclive" id="miclive"><i></i>麥克風聆聽中・拍手或直笛</span>`:'';
+  $('#drums').innerHTML=G.turn
+    ?`<button class="drum" data-team="0" style="--dc:${TEAM[0].c}">輪到${TEAM[0].n}<small>${G.input==='mic'?'輪到的隊伍拍手或吹直笛':'點這裡或按任何鍵'}</small><span class="combo" id="cb-0"></span><span class="en" id="en-0"><i></i></span>${live}</button>`
+    :solo&&G.input==='mic'?`<button class="drum" data-team="0" style="--dc:var(--sun)">拍手・吹直笛！<small>對著麥克風拍手或吹直笛，也可以點這裡</small><span class="combo" id="cb-0"></span><span class="en" id="en-0"><i></i></span>${live}</button>`
+    :solo
+    ?`<button class="drum" data-team="0" style="--dc:var(--sun)">拍！<small>點這裡、點畫面或按空白鍵</small><span class="combo" id="cb-0"></span><span class="en" id="en-0"><i></i></span></button>`
+    :TEAM.slice(0,G.teams).map((t,i)=>`<button class="drum" data-team="${i}" style="--dc:${t.c}">${t.n}<small>按 ${t.k[0].toUpperCase()} 或 ${t.k[1]}</small><span class="combo" id="cb-${i}"></span><span class="en" id="en-${i}"><i></i></span></button>`).join('');
+  $('#stage').classList.remove('fever');$('#stage').classList.toggle('teams',!solo);
+  G.act=-1;if(G.turn)setActive(0);
+  $('#pause-ov').hidden=true;
+  renderRound(0);
+  setPhase('pre');
+  show('scr-play');
+}
+/* ---- multi-touch input: every touch point is judged on its own ---- */
+const HAS_TOUCH='ontouchstart' in window;
+const lastHit={};
+function hitAt(x,y,fallback){
+  const el=document.elementFromPoint(x,y);
+  let d=el&&el.closest&&el.closest('#drums .drum');
+  if(!d&&fallback)d=fallback.closest&&fallback.closest('#drums .drum');
+  if(d)return G&&G.turn?-2:+d.dataset.team;
+  if(G&&G.teams===1&&el&&el.closest&&el.closest('#stage'))return 0;
+  return -1;
+}
+function fire(team){
+  const now=performance.now();
+  if(lastHit[team]&&now-lastHit[team]<30)return; // same finger reported twice
+  lastHit[team]=now;tap(team);
+}
+function fireAny(team){if(team===-2)fire(activeTeam());else if(team>=0)fire(team)}
+const playEl=$('#scr-play');
+playEl.addEventListener('touchstart',e=>{
+  if(!G||e.target.closest('.hud')||e.target.closest('.ov'))return;
+  e.preventDefault();
+  for(const t of e.changedTouches){fireAny(hitAt(t.clientX,t.clientY,t.target))}
+},{passive:false});
+playEl.addEventListener('pointerdown',e=>{
+  if(!G||e.target.closest('.hud')||e.target.closest('.ov'))return;
+  if(e.pointerType==='touch'&&HAS_TOUCH)return; // handled by touchstart
+  e.preventDefault();
+  fireAny(hitAt(e.clientX,e.clientY,e.target));
+});
+playEl.addEventListener('contextmenu',e=>e.preventDefault());
+function renderRound(r){
+  G.shown=r;const R=G.rounds[r];
+  $('#nota').innerHTML=renderNota(R.items,4,{syl:S.syl});
+  $('#hud-rd').textContent=`第 ${r+1} / ${G.nRounds} 回`;
+  // repaint marks already judged for this round
+  G.exp.forEach((x,k)=>{if(x.r===r)for(let t=0;t<G.teams;t++)if(G.judged[t][k])drawMark(t,k,G.judged[t][k])});
+}
+function setPhase(type,r){
+  const ph=$('#phase'),bub=$('#bubble'),svg=$('#nota svg');
+  ph.className='phase '+(type==='pre'?'count':type);
+  if(type==='demo'&&G.sight){ph.className='phase sight';ph.textContent='看譜預備';bub.textContent='看清楚譜，數 1 2 3 4！';if(svg){svg.classList.remove('run','resp','hide')}return}
+  if(type==='pre'){ph.textContent='準備';bub.textContent='準備好囉～'}
+  if(type==='count'){ph.textContent='預備';bub.textContent='一起數！'}
+  if(type==='demo'){ph.textContent='仔細聽';bub.textContent='聽我拍！'}
+  if(type==='ready'){ph.className='phase count';ph.textContent='預備拍';bub.textContent='準備好，跟著數 1 2 3 4！';if(svg)svg.classList.remove('run','resp','hide');return}
+  if(type==='end'){ph.className='phase resp';ph.textContent='終點！';bub.textContent='到終點囉！'}
+  if(type==='resp'){ph.textContent='換你拍！';bub.textContent=G.turn&&r!=null?`換${TEAM[r%G.teams].n}拍！`:G.teams>1?'各隊一起拍！':'換你囉！';
+    if(r!=null&&G.gold.some(s=>s.has(r))){ph.className='phase gold';ph.textContent=G.teams>1?'換你拍！':'黃金回合！'}}
+  if(svg){svg.classList.toggle('run',type==='demo'||type==='resp');svg.classList.toggle('resp',type==='resp');svg.classList.toggle('hide',type==='resp'&&S.hide)}
+}
+function frame(){
+  if(!G||!G.running)return;
+  const pn=performance.now();
+  if(G.lastPN){const dt=pn-G.lastPN;G.slow=(G.slow||0)*.95+(dt>34?1:0)*.05;if(G.slow>.5&&!RUN.low){RUN.low=true;RUN.fit&&RUN.fit()}}
+  G.lastPN=pn;
+  try{if(watchdog())frameBody()}catch(err){G.errs=(G.errs||0)+1;if(G.errs<5)console.warn('frame error',err)}
+  if(G&&G.running)requestAnimationFrame(frame);
+}
+function watchdog(){
+  if(G.paused){G.wdT=0;G.stallT=0;G.lastCT=0;return true}
+  const pn=performance.now(),ct=AC.currentTime;
+  if(AC.state!=='running'){if(!G.wdT)G.wdT=pn;try{AC.resume()}catch(e){}if(pn-G.wdT>800)audioLost();return false}
+  G.wdT=0;
+  if(G.lastCT&&ct===G.lastCT){if(!G.stallT)G.stallT=pn;if(pn-G.stallT>900){audioLost();return false}}else G.stallT=0;
+  G.lastCT=ct;return true;
+}
+function audioLost(){
+  G.paused=true;G.wdT=0;G.stallT=0;G.lastCT=0;try{AC.suspend()}catch(e){}
+  showPauseRhythm();$('#pause-msg').textContent='聲音被中斷了（可能切換了喇叭、藍牙，或其他 App 用了聲音）。按「繼續」就能接著玩。';
+  $('#pause-ov').hidden=false;
+}
+function frameBody(){
+  if(!G||!G.running)return;
+  const now=AC.currentTime,vt=now-outLat(),pos=(vt-G.t0)/G.spb,bar=Math.floor(pos/4),inBar=pos-bar*4;
+  if(bar!==G.lastBar){
+    G.lastBar=bar;const ph=phaseOf(bar);
+    if(ph.type==='count'){if(G.shown!==0)renderRound(0)}
+    if(ph.type==='demo'&&G.shown!==ph.r)renderRound(ph.r);
+    if(ph.type==='resp'||ph.type==='ready')$$('#nota .nt.lit').forEach(n=>n.classList.remove('lit'));
+    if(G.turn&&(ph.type==='demo'||ph.type==='ready'||ph.type==='resp')){const o=ph.r%G.teams;if(ph.type==='demo')banner(o,`輪到${TEAM[o].n}！`,TEAMHEX[o]);setActive(o)}
+    if(ph.type==='resp'){
+      for(let t=0;t<G.teams;t++)if(G.armed[t]&&(!G.turn||ph.r%G.teams===t)){G.armed[t]=false;G.gold[t].add(ph.r);G.goldUsed=true;banner(t,'黃金回合！金幣 ×3','#ffd23f');updEnergy(t)}
+    }
+    if(ph.type!=='end')setPhase(ph.type,ph.r);
+    G.lit=0;
+  }
+  const ph=phaseOf(bar),svg=$('#nota svg');
+  if(svg&&bar>=0&&ph.type!=='end'){
+    svg.querySelector('.ph').setAttribute('x',24+inBar*100-2.5);
+    const beat=Math.floor(inBar);
+    if(beat!==G.lastBeat){
+      G.lastBeat=beat;
+      const counting=ph.type==='count'||ph.type==='ready'||(G.sight&&ph.type==='demo');
+      if(counting)bigFlash(beat+1,ph.type==='count'?'預備':G.sight&&ph.type==='demo'?'看譜・預備拍':'預備拍');
+      else if(ph.type==='resp'&&beat===0)bigFlash(G.turn?`${TEAM[ph.r%G.teams].n}拍！`:'拍！','',true);
+      $$('#beats i').forEach((d,i)=>{d.classList.toggle('on',i===beat);d.textContent=counting?(i<=beat?i+1:''):''});
+      svg.querySelectorAll('.bt').forEach(r=>r.classList.toggle('cur',+r.dataset.b===beat&&(ph.type==='demo'||ph.type==='resp')));
+      if(counting)$('#bubble').textContent=['1','2','3','4'][beat]+'～';
+      if(counting)retrig($('#ani-wrap'),'bop');
+    }
+    if(ph.type==='demo'&&!G.sight){
+      const ons=G.rounds[ph.r].ons;
+      while(G.lit<ons.length&&ons[G.lit].t<=inBar){const n=svg.querySelector(`.nt[data-n="${G.lit}"]`);n&&n.classList.add('lit');retrig($('#ani-wrap'),'bop');G.lit++}
+    }
+  }
+  // misses
+  const tt=now-G.lat;
+  for(let t=0;t<G.teams;t++){
+    while(G.ptr[t]<G.exp.length&&G.exp[G.ptr[t]].T+GOOD<tt){if(!G.judged[t][G.ptr[t]]&&mine(t,G.ptr[t]))judge(t,G.ptr[t],'m');G.ptr[t]++}
+  }
+  while(G.chk<G.nRounds&&pos>=((G.chk+1)*G.rb+1)*4+.6)evalRound(G.chk++);
+  if(!G.goalAt&&pos>=G.totalBeats+.75){G.goalAt=now;setPhase('end');fanfare(starOf(Math.max(...G.stats.map(acc)))>=1)}
+  runDraw(now,pos);
+  if(G.goalAt&&now-G.goalAt>2.4){finish();return}
+}
+function tap(team,tIn){
+  if(!G||!G.running||G.paused)return;
+  const now=AC.currentTime,fromMic=tIn!=null;
+  const tt=(fromMic?tIn:now)-(fromMic?G.lat:(G.input==='mic'?outLat()+S.offset/1000:G.lat));let best=-1,bd=1e9;
+  for(let k=Math.max(0,G.ptr[team]-1);k<G.exp.length;k++){
+    const x=G.exp[k];if(x.T-tt>GOOD)break;if(G.judged[team][k]||!mine(team,k))continue;
+    const df=Math.abs(tt-x.T);if(df<bd){bd=df;best=k}
+  }
+  const ph=phaseOf(Math.floor((tt-G.t0)/(G.spb*4)+.03));
+  if(fromMic&&!(best>=0&&bd<=GOOD)&&ph.type!=='resp')return;
+  if(fromMic&&!(best>=0&&bd<=GOOD)&&tt-G.lastOn[team]<.3)return;
+  G.lastOn[team]=tt;
+  if(!fromMic&&G.input!=='mic')drumSound(now,team);
+  G.jumps[team]={t0:now,b:heroLift(team,now)};
+  const d=$(`#drums .drum[data-team="${team}"]`);if(d){d.classList.add('hit');setTimeout(()=>d.classList.remove('hit'),90)}
+  if(best>=0&&bd<=GOOD){judge(team,best,bd<=PERF?'p':'g');return}
+  if(ph.type==='resp'){if(!G.turn||ph.r%G.teams===team)extra(team,ph.r)}
+  else if(ph.type==='demo'&&!fromMic)popup(team,G.sight?'先看譜':'先聽喔','h');
+  else if(ph.type==='ready'&&!fromMic)popup(team,'預備中','h');
+}
+function judge(team,k,type){
+  G.judged[team][k]=type;const st=G.stats[team];st[type]++;
+  if(type!=='m'){st.combo++;st.max=Math.max(st.max,st.combo);st.pts=(st.pts||0)+Math.round((type==='p'?100:60)*G.exp[k].w)*(G.teams===1&&G.fever?2:1);st.score=Math.max(0,st.pts-(st.pen||0))}
+  else st.combo=0;
+  if(G.exp[k].r===G.shown)drawMark(team,k,type);
+  popup(team,{p:'完美！',g:'很好！',m:'撞到了'}[type],type);
+  const gold=G.gold[team].has(G.exp[k].r),mult=gold?3:1;
+  if(type!=='m'){st.cf=(st.cf||0)+(type==='p'?2:1)*mult*G.exp[k].w;st.coins=Math.round(st.cf)}
+  if(G.fx.length>40)G.fx=G.fx.filter(f=>AC.currentTime-f.t0<1);
+  if(type==='p')G.fx.push({L:team,k,t0:AC.currentTime,txt:gold?'🪙':G.teams===1?G.item:'⭐'});
+  if(type==='m')G.bonk[team]=AC.currentTime;
+  if(!G.armed[team]){
+    G.en[team]=Math.max(0,G.en[team]+(type==='p'?12:type==='g'?6:-15)*G.exp[k].w);
+    if(G.en[team]>=100){G.en[team]=0;G.armed[team]=true;banner(team,'能量滿了！下一回合是黃金回合','#ffd23f')}
+  }
+  updEnergy(team);
+  if(G.teams===1){
+    if(type==='p'){st.items++;flyItem();retrig($('#ani-wrap'),'happy')}
+    if(type==='m'&&Math.random()<.5)retrig($('#ani-wrap'),'sad');
+  }
+  updHud(team);
+}
+function extra(team,r){
+  if(r!=null)G.rx[team][r]++;
+  const st=G.stats[team],pen=r==null||G.rx[team][r]<=3;st.x++;G.en[team]=Math.max(0,G.en[team]-8);updEnergy(team);st.combo=0;
+  if(pen){st.pen=(st.pen||0)+20;st.score=Math.max(0,(st.pts||0)-st.pen)}
+  popup(team,'多拍了','x');updHud(team);
+}
+function banner(L,txt,c){const t=AC.currentTime;G.banners=G.banners.filter(b=>t-b.t0<2);G.banners.push({L,txt,c,t0:t})}
+function updEnergy(t){const e=$('#en-'+t);if(!e)return;e.classList.toggle('full',G.armed[t]);e.querySelector('i').style.width=G.en[t]+'%'}
+function evalRound(r){
+  const ks=[];G.exp.forEach((x,k)=>{if(x.r===r)ks.push(k)});if(!ks.length)return;
+  for(let t=0;t<G.teams;t++){
+    if(!mine(t,ks[0]))continue;
+    if(ks.every(k=>G.judged[t][k]&&G.judged[t][k]!=='m')&&!G.rx[t][r]){
+      const bonus=G.gold[t].has(r)?15:5;G.stats[t].cf=(G.stats[t].cf||0)+bonus;G.stats[t].coins=Math.round(G.stats[t].cf);G.stats[t].perfR++;
+      banner(t,`完美回合！+${bonus} 金幣`,'#a6e386');updHud(t);
+      if(G.teams===1)retrig($('#ani-wrap'),'happy');
+    }
+  }
+}
+function drawMark(team,k,type){
+  const svg=$('#nota svg');if(!svg)return;const g=svg.querySelector(`.nt[data-n="${G.exp[k].i}"]`);if(!g)return;
+  if(G.teams===1)g.classList.add('j-'+type);
+  const x=+g.dataset.x+(team-(G.teams-1)/2)*13;
+  const col=type==='m'?'var(--miss)':G.teams===1?(type==='p'?'var(--perfect)':'var(--good)'):TEAM[team].c;
+  const glyph=type==='p'?'●':type==='g'?'○':'×';
+  svg.querySelector('.mks').insertAdjacentHTML('beforeend',`<text class="mk" x="${x}" y="18" fill="${col}">${glyph}</text>`);
+}
+function popup(team,txt,cls){
+  const d=$(`#drums .drum[data-team="${team}"]`);if(!d)return;
+  d.querySelectorAll('.pop').forEach(p=>p.remove());
+  const p=document.createElement('span');p.className='pop '+cls;p.textContent=txt;d.appendChild(p);setTimeout(()=>p.remove(),720);
+}
+function updHud(team){
+  const st=G.stats[team],el=$(`#sc-${team} b`);if(el)el.textContent=st.score;
+  if(G.teams===1){const ci=$('#sc-items b');if(ci)ci.textContent=st.coins}
+  const cb=$(`#cb-${team}`);if(cb)cb.textContent=st.combo>=3?st.combo+' 連擊':'';
+  if(G.teams===1){
+    const fv=st.combo>=10;
+    if(fv!==G.fever){G.fever=fv;$('#stage').classList.toggle('fever',fv);$('#fever').innerHTML=fv?'<span class="fever-b">FEVER ×2</span>':''}
+  }
+}
+function flyItem(){
+  const d=$('#drums .drum'),b=$('#sc-items');if(!d||!b)return;
+  const r1=d.getBoundingClientRect(),r2=b.getBoundingClientRect();
+  const s=document.createElement('span');s.className='fly';s.textContent=G.item;document.body.appendChild(s);
+  const x0=r1.left+r1.width/2-16,y0=r1.top+r1.height*.3,x1=r2.left+10,y1=r2.top;
+  const done=()=>{s.remove();if(!G)return;b.querySelector('b').textContent=G.stats[0].coins;retrig(b,'pulse')};
+  if(s.animate){const a=s.animate([{transform:`translate(${x0}px,${y0}px) scale(1.2)`},{transform:`translate(${x1}px,${y1}px) scale(.6)`,opacity:.4}],{duration:600,easing:'cubic-bezier(.5,-.5,.6,1)'});a.onfinish=done}
+  else done();
+}
+function acc(st,t){const tot=G.exp.filter((x,k)=>mine(t||0,k)).length||1;return Math.max(0,Math.min(1,(st.p+.6*st.g-.25*st.x)/tot))}
+function starOf(a){return a>=.9?3:a>=.75?2:a>=.5?1:0}
+function finish(){
+  clearBig();G.running=false;clearInterval(G.timer);try{G.wl&&G.wl.release()}catch(e){}
+  const accs=G.stats.map(acc),best=Math.max(...accs),stars=starOf(best);
+  const book=G.sight?S.starsS:S.stars;
+  if(G.mode==='level')book[G.lv.id]=Math.max(book[G.lv.id]||0,stars);
+  // rewards
+  const runCoins=G.stats.reduce((a,x)=>a+x.coins,0),chest=stars*10;
+  const pays=[];
+  if(G.teams===1){
+    const o=G.playAs==='all'||G.playAs==null||!S.groups[G.playAs]?'all':G.playAs,w=o==='all'?S:S.groups[o],g=runCoins+chest;
+    w.coins=(w.coins||0)+g;w.earned=(w.earned||0)+g;if(o!=='all')S.earned+=g;
+    pays.push({o,run:runCoins,chest,grown:stars>=1?irrigate(w):0});
+  }else{
+    G.stats.forEach((st,i)=>{const w=S.groups[i],sti=starOf(accs[i]),g=st.coins+sti*10;
+      w.coins=(w.coins||0)+g;w.earned=(w.earned||0)+g;S.earned+=g;pays.push({o:i,run:st.coins,chest:sti*10,stars:sti,grown:sti>=1?irrigate(w):0})});
+  }
+  const xpGain=Math.round(G.stats.reduce((a,x)=>a+x.score,0)/(40*G.teams))+stars*15+(G.sight?10:0);
+  const lvBefore=lvInfo(S.xp).lv;S.xp+=xpGain;const LI=lvInfo(S.xp);
+  const nb=[],A=id=>{const b=award(id);if(b)nb.push(b)};
+  A('first');if(stars===3)A('star3');if(G.stats.some(x=>x.max>=20))A('combo20');if(G.stats.some(x=>x.perfR>0))A('perfr');
+  if(G.goldUsed)A('golden');if(G.sight&&stars>=1)A('sight1');if(G.sight&&stars===3)A('sight3');
+  if(G.teams>1)A('team');if(G.mode==='custom')A('custom');
+  if(LV.every(l=>(S.stars[l.id]||0)>=1))A('allclear');if(LV.every(l=>(S.starsS[l.id]||0)>=1))A('sightall');
+  if(S.earned>=300)A('rich');if(lvInfo(S.xp).lv>=5)A('lv5');
+  save();
+  const mn=G.map.name,msgs=[`抵達${mn}終點！再挑戰拿星星吧`,`${mn} 闖關成功！`,`${mn} 闖關成功！節奏很穩！`,`${mn} 完美破關！節奏小達人！`];
+  let h=`<div class="face">${animalSVG(G.animal)}</div><h3>${G.teams===1?msgs[stars]:'對戰結果'}</h3><div class="bigstars">${'<b>★</b>'.repeat(stars)}${'★'.repeat(3-stars)}</div>`;
+  if(G.teams===1){
+    const st=G.stats[0];
+    h+=`<p style="margin:0">準確度 <b style="font-family:var(--f-num);font-size:1.4em">${Math.round(best*100)}%</b>　最高連擊 <b style="font-family:var(--f-num)">${st.max}</b>　收集 ${G.item} × ${st.items}</p>
+    <div class="stats"><div class="st p"><b>${st.p}</b>完美</div><div class="st g"><b>${st.g}</b>很好</div><div class="st m"><b>${st.m}</b>撞到</div><div class="st"><b>${st.x}</b>多拍</div></div>`;
+  }else{
+    const order=G.stats.map((s,i)=>({i,s,a:accs[i]})).sort((a,b)=>b.s.score-a.s.score);
+    const top=order[0].s.score||1;
+    h+=`<div class="rank">${order.map((o,n)=>`<div class="rk" style="--tc:${TEAM[o.i].c}"><span class="pos">${n===0?'👑':n+1}</span><b>${TEAM[o.i].n}</b><span class="tr"><i style="width:${Math.round(o.s.score/top*100)}%"></i></span><span class="v">${o.s.score}</span></div><p class="note-s" style="text-align:left;margin:-.3em 0 0 3em">準確度 ${Math.round(o.a*100)}%・完美 ${o.s.p}・很好 ${o.s.g}・撞到 ${o.s.m}・多拍 ${o.s.x}${o.s.pen?`（扣 ${o.s.pen} 分）`:''}</p>`).join('')}</div>`;
+  }
+  h+=`<div class="reward">
+    ${pays.map(y=>`<div class="gsum"><span>${y.o==='all'?'🏫':`<i class="gdot" style="background:${GCOLOR[y.o]}"></i>`} <b>${esc(ownerName(y.o))}</b>　闖關 🪙${y.run} ＋ 寶箱 🪙${y.chest}${y.grown?`　💧灌溉 ${y.grown} 塊田`:''}</span><b>+${y.run+y.chest}</b></div>`).join('')}
+    ${nb.length?`<div class="rw"><span>🏅 徽章獎勵（全班）</span><b>+${nb.reduce((a,b)=>a+b.c,0)}</b></div>`:''}
+    <div class="rw"><span>經驗值</span><b>+${xpGain}</b></div>
+    ${LI.lv>lvBefore?`<div class="lvup">升級了！Lv.${LI.lv} ${titleOf(LI.lv)}</div>`:''}
+    <span class="xpbar"><i style="width:${Math.round(LI.rem/LI.need*100)}%"></i></span>
+    <div class="rw"><small>Lv.${LI.lv}・還差 ${LI.need-LI.rem} 經驗升級</small><b>全班 🪙 ${S.coins}</b></div>
+  </div>`;
+  if(nb.length)h+=`<div class="newb">${nb.map((b,i)=>`<span class="bdg" style="animation-delay:${.3+i*.15}s">${b.i} ${b.n}</span>`).join('')}</div>`;
+  const hasNext=G.mode==='level'&&G.lv.id<LV.length&&unlocked(G.lv.id+1);
+  h+=`<div class="row"><button class="btn alt" id="r-again">再玩一次</button>${hasNext?'<button class="btn go" id="r-next">下一關 →</button>':''}<button class="btn" id="r-farm" style="background:var(--sun)">去農場</button><button class="btn pk" id="r-shop">角色小屋</button><button class="btn alt" id="r-back">${G.mode==='level'?'回地圖':'回選單'}</button></div>`;
+  h=`<span class="clsbtn" style="box-shadow:none;cursor:default">🏫 ${esc(className())}</span>`+h;
+  $('#res').innerHTML=h;
+  const cfg=G;
+  $('#r-again').onclick=()=>launch(Object.assign({},cfg,{teams:S.players,nRounds:cfg.baseRounds}));
+  if(hasNext)$('#r-next').onclick=()=>openIntro(cfg.lv.id+1);
+  $('#r-back').onclick=()=>cfg.mode==='level'?openMap():openCustom();
+  $('#r-shop').onclick=()=>openShop(cfg.mode==='level'?'map':'title');
+  $('#r-farm').onclick=()=>openFarm(cfg.mode==='level'?'map':'title',cfg.teams>1?0:(pays[0].o));
+  setTimeout(()=>show('scr-result'),350);
+}
+
+/* pause */
+function showPauseRhythm(){clearBig();$('#scr-play').classList.add('paused');const svg=$('#nota svg');if(svg){G.hidWas=svg.classList.contains('hide');svg.classList.remove('hide')}}
+function pause(){if(!G||!G.running||G.paused)return;G.paused=true;AC.suspend();$('#pause-msg').textContent='看著上面的節奏，一起練習拍拍看！';showPauseRhythm();$('#pause-ov').hidden=false}
+$('#b-pause').onclick=pause;
+$('#b-resume').onclick=()=>{ensureAC();AC.resume().catch(()=>{});G.paused=false;G.lastCT=0;G.stallT=0;G.wdT=0;$('#pause-ov').hidden=true;$('#scr-play').classList.remove('paused');
+  const svg=$('#nota svg');if(svg&&G.hidWas)svg.classList.add('hide');G.hidWas=false;wake()};
+$('#b-restart').onclick=()=>{const c=G;$('#pause-ov').hidden=true;AC.resume().then(()=>launch(Object.assign({},c,{nRounds:c.baseRounds})))};
+$('#b-quit').onclick=()=>{const c=G;$('#pause-ov').hidden=true;stopGame();c.mode==='level'?openIntro(c.lv.id):openCustom()};
+document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();else if(G&&G.running)wake()});
+function wake(){try{navigator.wakeLock&&navigator.wakeLock.request('screen').then(l=>{if(G)G.wl=l}).catch(()=>{})}catch(e){}}
+
+/* keyboard */
+document.addEventListener('keydown',e=>{
+  if(e.repeat)return;
+  if(!$('#sync-ov').hidden){if(e.key==='Escape')$('#sync-close').click();return}
+  if(!$('#cls-ov').hidden){if(e.key==='Escape')$('#cls-close').click();return}
+  if(!$('#set-ov').hidden){if(calOn&&(e.key===' '||e.key==='Enter')){e.preventDefault();calTap()}if(e.key==='Escape')closeSettings();return}
+  if($('#scr-play').hidden||!G)return;
+  if(e.key==='Escape'){G.paused?$('#b-resume').click():pause();return}
+  const k=e.key.toLowerCase();
+  if(G.teams===1||G.turn){if(k===' '||k==='enter'||/^[a-z0-9]$/.test(k)){e.preventDefault();tap(activeTeam())}return}
+  TEAM.slice(0,G.teams).forEach((t,i)=>{if(t.k.includes(k)){e.preventDefault();tap(i)}});
+});
+
+/* ================= settings ================= */
+let calOn=false,calClicks=[],calTaps=[];
+function openSettings(){
+  $('#s-vol').value=S.vol;$('#s-metro').value=S.metro;$('#s-off').value=S.offset;$('#s-offv').textContent=S.offset+' ms';
+  $('#s-reset').textContent=`清除「${className()}」的進度`;$('#s-reset').dataset.c='';$('#s-reset').classList.remove('warn');
+  $('#set-ov').hidden=false;
+}
+function closeSettings(){$('#set-ov').hidden=true;save();if(!$('#scr-map').hidden)openMap();if(!$('#scr-title').hidden)renderMe()}
+$('#s-close').onclick=closeSettings;
+$('#s-vol').oninput=e=>{S.vol=+e.target.value};
+$('#s-metro').oninput=e=>{S.metro=+e.target.value};
+$('#s-off').oninput=e=>{S.offset=+e.target.value;$('#s-offv').textContent=S.offset+' ms'};
+$('#s-reset').onclick=e=>{const b=e.target;if(b.dataset.c){resetClassAll();save();syncTeamNames();b.classList.remove('warn');b.textContent=`已清除「${className()}」的星星、金幣、角色、徽章、麥田`;b.dataset.c='';renderMe()}else{b.textContent='⚠ 再按一次才會真的清除';b.classList.add('warn');b.dataset.c='1'}};
+$('#cal-start').onclick=()=>{
+  ensureAC();calOn=true;calTaps=[];calClicks=[];const t0=AC.currentTime+.8,spb=.6;
+  for(let i=0;i<8;i++){calClicks.push(t0+i*spb);click(t0+i*spb,i%4===0,master,true)}
+  $('#cal-msg').textContent='跟著聲音拍…';
+  setTimeout(()=>{
+    calOn=false;
+    const ds=calTaps.map(t=>{let m=1e9;calClicks.forEach(c=>{if(Math.abs(t-c)<Math.abs(m))m=t-c});return m}).filter(d=>Math.abs(d)<.35).sort((a,b)=>a-b);
+    if(ds.length<4){$('#cal-msg').textContent='拍的次數太少，請再試一次。';return}
+    const med=ds[Math.floor(ds.length/2)],off=Math.round((med-outLat())*1000/5)*5;
+    S.offset=Math.max(-100,Math.min(300,off));save();$('#s-off').value=S.offset;$('#s-offv').textContent=S.offset+' ms';
+    $('#cal-msg').textContent=`校正完成：延遲設為 ${S.offset} ms`;
+  },(.8+8*.6+.6)*1000);
+};
+(()=>{
+  const box=$('#ttest'),msg=$('#ttest-msg');let maxN=0;
+  const draw=e=>{
+    e.preventDefault();box.querySelectorAll('.tdot').forEach(d=>d.remove());
+    const r=box.getBoundingClientRect(),n=e.touches.length;maxN=Math.max(maxN,n);
+    for(const t of e.touches){const d=document.createElement('span');d.className='tdot';d.style.left=(t.clientX-r.left)+'px';d.style.top=(t.clientY-r.top)+'px';box.appendChild(d)}
+    msg.textContent=`現在 ${n} 個觸碰點・最多同時 ${maxN} 個`+(maxN>0&&n===0?(maxN>=S.players?'':'（這台螢幕的觸碰點可能不夠）'):'');
+  };
+  ['touchstart','touchmove','touchend','touchcancel'].forEach(ev=>box.addEventListener(ev,draw,{passive:false}));
+  if(!HAS_TOUCH)msg.textContent='觸控測試：這個瀏覽器沒有回報觸控功能，只能用滑鼠或鍵盤';
+})();
+function calTap(){if(!AC)return;const t=AC.currentTime;drumSound(t,1);if(calOn)calTaps.push(t);const d=$('#cal-drum');d.classList.add('hit');setTimeout(()=>d.classList.remove('hit'),90)}
+$('#cal-drum').addEventListener('pointerdown',e=>{e.preventDefault();ensureAC();calTap()});
+
+runInit();
+ensureGroups();syncTeamNames();
+openTitle();
+syncInit();drawSyncStatus();
+})();
+</script>
+</body>
+</html>
