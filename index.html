@@ -487,6 +487,9 @@ details summary{cursor:pointer;font-weight:700;color:var(--t2)}
 .rvc ul{margin:.2em 0;padding-left:1.3em;font-size:.92em}
 .rvc .tip{margin:0;font-size:.88em;color:var(--ink-soft)}
 .review .row{justify-content:flex-start}
+.ctbox{width:100%;text-align:left;border:3px solid var(--ink);border-radius:18px;background:#fff8e6;padding:.7em .9em;display:flex;flex-direction:column;gap:.4em}
+.ctbox ul{margin:0;padding-left:.2em;list-style:none;display:flex;flex-direction:column;gap:.2em}
+.ctbox .note-s{margin:0}.ctbox .btn{align-self:flex-start;text-decoration:none}
 /* overlays */
 .ov{position:absolute;inset:0;background:rgba(59,42,82,.45);display:grid;place-items:center;z-index:30;
   padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-block:16px}
@@ -822,6 +825,7 @@ details summary{cursor:pointer;font-weight:700;color:var(--t2)}
       <div class="opt"><label class="ol" for="s-off">延遲校正</label><input type="range" id="s-off" min="-100" max="300" step="5"><output id="s-offv"></output></div>
       <p class="note-s">接藍牙喇叭或大電視時聲音常會慢一點，拍得很準卻常被判「差一點」就做一次校正。</p>
       <div class="cal"><button class="btn sm" id="cal-start">開始校正</button><button class="drum" id="cal-drum">拍</button><span id="cal-msg" class="note-s">按開始後會響 8 聲，跟著聲音點「拍」。</span></div>
+      <label class="tog"><input type="checkbox" id="s-ct"> 分組比賽結束後，前三名自動加到班級小鎮（+3／+2／+1，兩個遊戲需連到同一個雲端資料庫）</label>
       <button class="btn sm alt" id="s-help" type="button" style="align-self:flex-start">❓ 重新觀看玩法說明</button>
       <button class="btn sm" id="s-sync" type="button" style="align-self:flex-start;background:#bfe6ff">📲 跨裝置同步・轉移（電腦和平板連動）</button>
       <div class="ttest" id="ttest"><span id="ttest-msg">觸控測試：請幾位同學用手指同時按住這個框</span></div>
@@ -2580,6 +2584,44 @@ function bindReview(errs,cfg){
       bpm:Math.max(50,Math.round((cfg.mode==='review'?cfg.bpm0:cfg.bpm)*f)),bpm0:cfg.mode==='review'?cfg.bpm0:cfg.bpm,sight:false,title:'錯題練習'}))};
   const s1=$('#rv-slow'),s2=$('#rv-norm');if(s1)s1.onclick=()=>go(.75);if(s2)s2.onclick=()=>go(1);
 }
+/* ================= 班級小鎮 bridge: group placings → classtown_inbox (same site gogo3747p.github.io) ================= */
+const CT_URL='https://gogo3747p.github.io/musicclasspoint/',CT_PTS=[3,2,1];
+function ctPlacings(scores){   // standard competition ranking: ties share a place, the next place is skipped
+  return scores.map(v=>1+scores.filter(w=>w>v).length);
+}
+function normDB(u){return String(u||'').trim().replace(/\/+$/,'').toLowerCase()}
+function sameDBasClassTown(){   // both games on this device must be synced to the same Firebase database
+  let c=null;try{c=JSON.parse(localStorage.getItem('classtown_sync')||'null')}catch(e){}
+  const mine=S.sync&&S.sync.on&&S.sync.url?normDB(S.sync.url):'';
+  if(!mine)return (!c||!c.u)?{ok:false,none:true}:{ok:false,why:'節奏小鎮在這台裝置沒有連上雲端資料庫'};
+  if(!c||!c.u)return {ok:false,none:true};
+  if(!c.on)return {ok:false,why:'班級小鎮在這台裝置沒有連上雲端資料庫'};
+  if(normDB(c.u)!==mine)return {ok:false,why:'節奏小鎮和班級小鎮連的是不同的資料庫'};
+  return {ok:true};
+}
+function sendToClassTown(){
+  if(G.teams<2||G.mode==='review'||S.ctOn===false)return null;
+  const chk=sameDBasClassTown();if(chk.none)return null;   // this device never set up 班級小鎮 sync: say nothing
+  const scores=G.stats.map(st=>st.score),pl=ctPlacings(scores),adds={},rows=[];
+  scores.forEach((v,i)=>{const pts=CT_PTS[pl[i]-1]||0;rows.push({i,place:pl[i],pts,mapped:i<3});if(i<3&&pts)adds[i+1]=pts});
+  rows.sort((a,b)=>a.place-b.place||a.i-b.i);
+  let ok=false;
+  if(!chk.ok)return {rows,ok:false,any:Object.keys(adds).length>0,blocked:chk.why};
+  if(Object.keys(adds).length){
+    try{const k='classtown_inbox';let L=JSON.parse(localStorage.getItem(k)||'[]');if(!Array.isArray(L))L=[];
+      L.push({id:'rt'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),at:Date.now(),src:'節奏小鎮',adds});
+      localStorage.setItem(k,JSON.stringify(L.slice(-30)));ok=true}catch(e){ok=false}
+  }
+  return {rows,ok,any:Object.keys(adds).length>0};
+}
+function ctHTML(ct){
+  if(!ct)return '';
+  const line=r=>`<li><i class="gdot" style="background:${GCOLOR[r.i]}"></i> ${esc(TEAM[r.i].n)}　第 ${r.place} 名　${ct.blocked?'':r.mapped?(r.pts?`→ 班級小鎮第 ${r.i+1} 組 <b>+${r.pts}</b>`:'（第 4 名以後不加分）'):'（班級小鎮只有 1～3 組，這組不加分）'}</li>`;
+  return `<div class="ctbox"><b class="rvt">🏫 班級小鎮小組加分</b>
+    <ul>${ct.rows.map(line).join('')}</ul>
+    <p class="note-s">${ct.blocked?`沒有加到班級小鎮：${ct.blocked}。只有兩個遊戲在這台裝置都連到同一個雲端資料庫時才會自動加分，避免別人用這個網站時加到您的班級。`:!ct.any?'這一局沒有可以加分的組別。':ct.ok?'已經送出！在這台裝置打開班級小鎮，就會加到班級小鎮「目前選擇的班級」，算進這節課的分數（6 小時內有效，按錯可以在班級小鎮復原）。':'這台裝置無法送出加分，請到班級小鎮手動加分。'}</p>
+    <a class="btn sm" href="${CT_URL}" target="_blank" rel="noopener">開啟班級小鎮 ↗</a></div>`;
+}
 function finish(){
   clearBig();G.running=false;clearInterval(G.timer);try{G.wl&&G.wl.release()}catch(e){}
   const accs=G.stats.map(acc),best=Math.max(...accs),stars=starOf(best);
@@ -2603,6 +2645,7 @@ function finish(){
   if(G.goldUsed)A('golden');if(G.sight&&stars>=1)A('sight1');if(G.sight&&stars===3)A('sight3');
   if(G.teams>1)A('team');if(G.mode==='custom')A('custom');
   const errs=analyzeErrors();if(G.mode==='review'&&!errs.length)A('fixer');
+  const ct=sendToClassTown();
   if(LV.every(l=>(S.stars[l.id]||0)>=1))A('allclear');if(LV.every(l=>(S.starsS[l.id]||0)>=1))A('sightall');
   if(S.earned>=300)A('rich');if(lvInfo(S.xp).lv>=5)A('lv5');
   save();
@@ -2617,6 +2660,7 @@ function finish(){
     const top=order[0].s.score||1;
     h+=`<div class="rank">${order.map((o,n)=>`<div class="rk" style="--tc:${TEAM[o.i].c}"><span class="pos">${n===0?'👑':n+1}</span><b>${TEAM[o.i].n}</b><span class="tr"><i style="width:${Math.round(o.s.score/top*100)}%"></i></span><span class="v">${o.s.score}</span></div><p class="note-s" style="text-align:left;margin:-.3em 0 0 3em">準確度 ${Math.round(o.a*100)}%・完美 ${o.s.p}・很好 ${o.s.g}・撞到 ${o.s.m}・多拍 ${o.s.x}${o.s.pen?`（扣 ${o.s.pen} 分）`:''}</p>`).join('')}</div>`;
   }
+  h+=ctHTML(ct);
   h+=reviewHTML(errs,G);
   h+=`<div class="reward">
     ${pays.map(y=>`<div class="gsum"><span>${y.o==='all'?'🏫':`<i class="gdot" style="background:${GCOLOR[y.o]}"></i>`} <b>${esc(ownerName(y.o))}</b>　闖關 🪙${y.run} ＋ 寶箱 🪙${y.chest}${y.grown?`　💧灌溉 ${y.grown} 塊田`:''}</span><b>+${y.run+y.chest}</b></div>`).join('')}
@@ -2669,7 +2713,8 @@ document.addEventListener('keydown',e=>{
 
 /* ================= settings ================= */
 let calOn=false,calClicks=[],calTaps=[];
-function openSettings(){
+$('#s-ct').onchange=e=>{S.ctOn=e.target.checked;save()};
+function openSettings(){$('#s-ct').checked=S.ctOn!==false;
   $('#s-vol').value=S.vol;$('#s-metro').value=S.metro;$('#s-off').value=S.offset;$('#s-offv').textContent=S.offset+' ms';
   $('#s-reset').textContent=`清除「${className()}」的進度`;$('#s-reset').dataset.c='';$('#s-reset').classList.remove('warn');
   $('#set-ov').hidden=false;
